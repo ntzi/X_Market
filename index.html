@@ -1,0 +1,218 @@
+<html>
+<head>
+	<title> Crypto MVP </title>
+
+	<!-- Including google font Josefin Sans -->
+	<link href="https://fonts.googleapis.com/css?family=Josefin+Sans|Josefin+Slab" rel="stylesheet">
+	<!-- Including bootstrap v3.3.7 -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<!-- Including jquery v3.2.1 -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<!-- Including socket.io file v2.0.3 -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
+
+	<!-- Custom CSS to make it look presentable -->
+    <style>
+		.font{
+			font-family: 'Josefin Slab', serif;
+			text-align:center;
+			font-size: 40px;
+			font-weight:bold;
+		}
+		textarea {
+			font-family: 'Josefin Slab', serif;
+			width: 100%;
+			min-height: 50px;
+			font-size: 20px;
+			padding: 12px 20px;
+			margin: 8px 0;
+			border: 2px solid #4db8ff;
+
+		}
+
+		input[type=button]{
+			font-family: 'Josefin Slab', serif;
+			width: 100%;
+			background-color: #4db8ff;
+			border: none;
+			color: white;
+			font-size: 30px;
+			padding: 16px 32px;
+			text-decoration: none;
+			margin: 4px 2px;
+			cursor: pointer;
+			border-radius: 15px;
+		}
+		input:hover{
+			 background-color: #008ae6;
+		}
+		input:focus,
+		textarea:focus,
+		button:focus {
+			outline: none;
+		}
+
+	</style>
+</head>
+<body>
+
+
+	<div class="container">
+		<div class="col-md-3">
+			<!-- Heading -->
+			<h1 class="font">
+				Platform
+			</h1>
+			<hr>
+
+			<div>
+				<!-- Text area where admin will write quote -->
+				<textarea id="high_platform"></textarea>
+				<br>
+				<br>
+			</div>
+		</div>
+		<div class="col-md-2">
+			<!-- Heading -->
+			<h1 class="font">
+				Price (h)
+			</h1>
+			<hr>
+
+			<div>
+				<!-- Text area where admin will write quote -->
+				<textarea id="high_price"></textarea>
+				<br>
+				<br>
+			</div>
+		</div>
+
+		<div class="col-md-2">
+			<!-- Heading -->
+			<h1 class="font">
+				Difference
+			</h1>
+			<hr>
+
+			<div>
+				<!-- Text area where admin will write quote -->
+				<textarea id="difference"></textarea>
+				<br>
+				<br>
+			</div>
+		</div>
+		<div class="col-md-2">
+			<!-- Heading -->
+			<h1 class="font">
+				Price (l)
+			</h1>
+			<hr>
+
+			<div>
+				<!-- Text area where admin will write quote -->
+				<textarea id="low_price_0"></textarea>
+				<textarea id="low_price_1"></textarea>
+				<textarea id="low_price_2"></textarea>
+				<textarea id="low_price_3"></textarea>
+				<textarea id="low_price_4"></textarea>
+				<textarea id="low_price_5"></textarea>
+				<textarea id="low_price_6"></textarea>
+				<br>
+				<br>
+				<!-- Quotes Tranferred to server when button is clicked via "new" event-->
+				<!--
+				<div>
+					<input type="button" id="aquote" value="Add your Quote">  </button>
+				</div>
+				-->
+			</div>
+		</div>
+		<div class="col-md-3">
+			<!-- Heading -->
+			<h1 class="font">
+				Platform
+			</h1>
+			<hr>
+
+			<div>
+				<!-- Text area where admin will write quote -->
+				<textarea id="low_platform_0"></textarea>
+				<textarea id="low_platform_1"></textarea>
+				<textarea id="low_platform_2"></textarea>
+				<textarea id="low_platform_3"></textarea>
+				<textarea id="low_platform_4"></textarea>
+				<textarea id="low_platform_5"></textarea>
+				<textarea id="low_platform_6"></textarea>
+				<br>
+				<br>
+			</div>
+		</div>
+	</div>
+
+	<script>
+	//Jquery code starts
+	$('document').ready(function(){
+	//Connecting the socket to host and port
+	 var socket = io.connect('http://localhost:3000');
+	   socket.on('welcome', function (data) {
+
+	  });
+    socket.on('binance_data' , function(input){
+  	  console.log('data = ' + input.data);
+	  $('#high_platform').val(input.data[0].platform_name);
+	  // $('#hight_pair_name').val(input.data.symbol);
+	  $('#high_price').val(input.data[0].price);
+	  // $('#low_platform_name_1').val('Binance');
+	  // $('#low_price_1').val(input.data.price);
+
+
+	  // Fetch data on button click.
+	  // $('#aquote').click(function(){
+		//   // data = $('#qcontent').val()
+		//   // console.log(data);
+		//   console.log('Button clicked');
+		//   socket.emit('get_data');
+		//   socket.on('server_data' , function(input){
+		// 	  console.log('data = ' + input.data);
+		// 	  $('#qcontent').val(input.data);
+		//   })
+
+
+		  //
+		  // // data = 'empty';
+		  // //Emitting the event and passing the quote to the server
+		  // socket.on('pull_data', function () {
+		  // 	socket.emit('server_data' , { quote: data })
+		  // 	console.log(data);
+		  // 	$('#qcontent').val(data)
+			// })
+
+		  // $('#qcontent').val('nikos');
+	  })
+	  socket.on('data_ascending' , function(input){
+		  // console.log('data = ' + input.data);
+		  $('#low_platform_0').val(input.data[0].platform_name);
+		  $('#low_platform_1').val(input.data[1].platform_name);
+		  $('#low_platform_2').val(input.data[2].platform_name);
+		  $('#low_platform_3').val(input.data[3].platform_name);
+		  $('#low_platform_4').val(input.data[4].platform_name);
+		  $('#low_platform_5').val(input.data[5].platform_name);
+		  $('#low_platform_6').val(input.data[6].platform_name);
+		  $('#low_price_0').val(input.data[0].price);
+		  $('#low_price_1').val(input.data[1].price);
+		  $('#low_price_2').val(input.data[2].price);
+		  $('#low_price_3').val(input.data[3].price);
+		  $('#low_price_4').val(input.data[4].price);
+		  $('#low_price_5').val(input.data[5].price);
+		  $('#low_price_6').val(input.data[6].price);
+	  })
+	  socket.on('difference' , function(input){
+	  	// console.log('data = ' + input.data);
+	  	$('#difference').val(input.data.difference_percentage + "% (" + input.data.difference + ")");
+	  })
+	})
+	//jquery code ends
+	</script>
+
+</body>
+</html>
