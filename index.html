@@ -148,7 +148,21 @@
 			</div>
 		</div>
 	</div>
-
+	<div class="container">
+		<div class="col-md-12">
+			<div>
+				<table class="table" id="my_table">
+					<tr>
+						<td><h1 class="font">'Platform</h1></td>
+						<td><h1 class="font">Price</h1></td>
+						<td><h1 class="font">Difference</h1></td>
+						<td><h1 class="font">Price</h1></td>
+						<td><h1 class="font">Platform</h1></td>
+					</tr>
+				</table>
+			</div>
+		</div>
+	</div>
 	<script>
 	//Jquery code starts
 	$('document').ready(function(){
@@ -192,19 +206,24 @@
 	  socket.on('data_ascending' , function(input){
 		  // console.log('data = ' + input.data);
 		  $('#low_platform_0').val(input.data[0].platform_name);
-		  $('#low_platform_1').val(input.data[1].platform_name);
-		  $('#low_platform_2').val(input.data[2].platform_name);
-		  $('#low_platform_3').val(input.data[3].platform_name);
-		  $('#low_platform_4').val(input.data[4].platform_name);
-		  $('#low_platform_5').val(input.data[5].platform_name);
-		  $('#low_platform_6').val(input.data[6].platform_name);
 		  $('#low_price_0').val(input.data[0].price);
-		  $('#low_price_1').val(input.data[1].price);
-		  $('#low_price_2').val(input.data[2].price);
-		  $('#low_price_3').val(input.data[3].price);
-		  $('#low_price_4').val(input.data[4].price);
-		  $('#low_price_5').val(input.data[5].price);
-		  $('#low_price_6').val(input.data[6].price);
+
+		  $('#my_table tbody').html(
+			  '<tr><td><h1 class="font">' + 'Platform' +
+			  '</h1></td><td><h1 class="font">' + 'Price' +
+			  '</h1></td><td><h1 class="font">' + 'Difference' +
+			  '</h1></td><td><h1 class="font">' + 'Price' +
+			  '</h1></td><td><h1 class="font">' + 'Platform' +
+			  '</h1></td></tr>');
+		  for (var i=0; i<input.data.length; i++){
+		    $('#my_table').append(
+				'<tr><td>' + input.data[input.data.length - 1].platform_name +
+				'</td><td>' + input.data[input.data.length - 1].price +
+				'</td><td>' + '###%' +
+				'</td><td>' + input.data[i].price +
+				'</td><td>' + input.data[i].platform_name +
+				'</td></tr>');
+		  }
 	  })
 	  socket.on('difference' , function(input){
 	  	// console.log('data = ' + input.data);

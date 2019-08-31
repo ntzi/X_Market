@@ -29,10 +29,12 @@ objIndex = fetched_data.findIndex((obj => obj.first_nom == 'Pig'));
 
 //Update object's name property.
 // fetched_data[objIndex].last_nom= 100;
-fetched_data = fetched_data.sort( compare );
 
+let fetched_data_copy = JSON.parse(JSON.stringify(fetched_data));
+// fetched_data_copy = fetched_data;
+fetched_data.sort( compare );
 
-// console.log("After update: ", fetched_data)
+// console.log("fetched_data: \n", fetched_data)
 // console.log(typeof(fetched_data[0].last_nom))
 
 
@@ -179,23 +181,193 @@ const CoinGeckoClient = new CoinGecko();
 var func = async() => {
   // let data = await CoinGeckoClient.ping();
   // let data = await CoinGeckoClient.coins.all();
-  let data = await CoinGeckoClient.coins.fetchTickers('bitcoin');
-  // console.log(data.data[0].market_data)
-  console.log(data.data.tickers)
-  for (var i=0; i<data.data.tickers.length; i++){
-      var base = data.data.tickers[i].base;
-      var market = data.data.tickers[i].market.name;
-      var usd_price = data.data.tickers[i].converted_last.usd;
-      // console.log(market + " " + base + " " + usd_price);
-      if (base == "BTC"){
-          console.log(market + " " + base + " " + usd_price);
-          prices.push({price: usd_price, name:market});
 
+  last_page = false;
+  page = 1;
+  while (!last_page){
+      page = page + 1;
+
+      params = {
+          exchangeId: 'binance',
+          page: page
       }
+      let data = await CoinGeckoClient.coins.fetchTickers(coinId='bitcoin', params);
+      console.log(data.data.tickers.length)
+      if (data.data.tickers.length == 0){
+          last_page = true;
+      }
+      console.log(data.data.tickers)
+      console.log('Page = %d', page);
   }
-  prices = prices.sort( compare_descending );
-  console.log(prices)
+  //
+  // // let data = await CoinGeckoClient.exchanges.list();
+  // console.log(data)
+  //
+  // // console.log(data.data[0].market_data)
+  // // console.log(data.data.tickers)
+  // for (var i=0; i<data.data.tickers.length; i++){
+  //     var base = data.data.tickers[i].base;
+  //     var market = data.data.tickers[i].market.name;
+  //     var usd_price = data.data.tickers[i].converted_last.usd;
+  //     // console.log(market + " " + base + " " + usd_price);
+  //     if (base == "BTC"){
+  //         console.log(market + " " + base + " " + usd_price);
+  //         prices.push({price: usd_price, name:market});
+  //
+  //     }
+  // }
+  // prices = prices.sort( compare_descending );
+  // console.log(prices)
 
 };
 
-func();
+// func();
+
+
+
+
+var get_tickets = (id, exchange_ids=null, page_num) => {
+    var page_num = 1;
+    var id='bitcoin';
+    var exchange_ids='binance';
+    last_page = false;
+    // while (!last_page){
+        var page = `page=${page_num}`;
+        var url = `https://api.coingecko.com/api/v3/coins/${id}/tickers?${page}`;
+
+
+        if (exchange_ids != null){
+            url = url + '&exchange_ids=' + exchange_ids;
+        }
+
+        promise = new Promise((resolve, reject) => {
+            // const url = "https://api.coingecko.com/api/v3/coins/bitcoin/tickers?exchange_ids=binance";
+            var request = https.request(url, function (response) {
+                var chunks = [];
+                response.on("data", function (chunk) {
+                    chunks.push(chunk);
+                });
+                response.on('end', function () {
+                    var result = JSON.parse(chunks.join(''));
+                    console.log(result.tickers[0]);
+                    console.log(result.tickers.length);
+
+                    if (result.tickers.length < 100){
+                        last_page = true;
+                    }
+
+                    // obj_index = fetched_data.findIndex((obj => obj.platform_name == 'allcoin'));
+                    // // console.log(result.BTC_USD)
+                    // // The best ask price. The cheapest price that you can buy coin right now.
+                    // price = result.data.sell;
+                    // // Convert string to float.
+                    // price = parseFloat(price);
+                    // //Update price in array.
+                    // fetched_data[obj_index].price = price;
+                })
+            })
+            request.end();
+        })
+    //     // console.log(data.data.tickers)
+    //     console.log('Page = %d', page_num);
+    //     page_num = page_num + 1;
+    //     last_page = true;
+    // }
+
+    return promise, last_page
+};
+
+// res = func_3(id='bitcoin', exchange_ids='binance');
+// console.log(res)
+
+// const func_3 = async(id, exchange_ids=null) => {
+const func_3 = async() => {
+    var page_num = 1;
+    last_page = false;
+    while (!last_page){
+        promise = get_tickets();
+        Promise.all([promise])
+        .then(
+            console.log('eererer')
+        )
+        // promise = get_tickets(id=id, exchange_ids=exchange_ids, page_num=page_num);
+        // // promise_func = get_tickets({id=id, exchange_ids=exchange_ids, page_num=page_num}).then(
+        // let promise.then(value => {
+        // // promise_func.then(
+        //     console.log(value)
+        //     page_num = page_num + 1;
+        //     last_page = true;
+        // });
+    }
+}
+
+// func_3(id='bitcoin', exchange_ids='binance');
+
+const binance_api = require('node-binance-api')().options({
+    APIKEY: '5voMApdn1jp8AeVRdYazi7SXD32MpZjvwwrE3CGamIch96041K4QOOv0Ln4r1fTI',
+    APISECRET: 'cCPQ6aYNCbUA3fmgYolN4FAFEnIJ5eJ4nU6zSOF33WYvAnkFBaZuZlOmNX1FTFPY',
+    useServerTime: true // If you get timestamp errors, synchronize to server time at startup
+});
+const kraken_api = require('node-kraken-api')
+const kraken_public = kraken_api()
+
+
+function binance(){
+    promise = new Promise((resolve, reject) => {
+        // *************** USE USD NOT USDT ***********************
+        binance_api.prices((error, ticker) => {
+            obj_index = fetched_data.findIndex((obj => obj.platform_name == 'binance'));
+            // Convert string to float.
+            price = parseFloat(ticker.BTCUSDT);
+            console.log(ticker)
+            //Update price in array.
+            // fetched_data[obj_index].price = price;
+        })
+    })
+}
+
+function lakebtc() {
+    promise = new Promise((resolve, reject) => {
+        const url = "https://api.LakeBTC.com/api_v2/ticker";
+        var request = https.request(url, function (response) {
+            var chunks = [];
+            response.on("data", function (chunk) {
+                chunks.push(chunk);
+            });
+            response.on('end', function () {
+                var result = JSON.parse(chunks.join(''));
+                console.log(result)
+                // obj_index = fetched_data.findIndex((obj => obj.platform_name == 'lakebtc'));
+                // // console.log(result.BTC_USD)
+                // // The best ask price. The cheapest price that you can buy coin right now.
+                // price = result.bids[0][0];
+                // // Convert string to float.
+                // price = parseFloat(price);
+                // //Update price in array.
+                // fetched_data[obj_index].price = price;
+            })
+        })
+        request.end();
+    })
+    return promise
+};
+
+// binance()
+// lakebtc()
+
+
+
+
+const resolvedProm = Promise.resolve(33);
+
+let thenProm = resolvedProm.then(value => {
+    console.log("this gets called after the end of the main stack. the value received and returned is: " + value);
+    return value;
+});
+// instantly logging the value of thenProm
+console.log(thenProm);
+
+// using setTimeout we can postpone the execution of a function to the moment the stack is empty
+setTimeout(() => {
+    console.log(thenProm);
+});
