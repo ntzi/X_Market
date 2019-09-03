@@ -36,20 +36,20 @@ function sleep(ms) {
 }
 
 function compare_descending( a, b ) {
-  if ( a.price > b.price ){
+  if ( a.difference > b.difference ){
     return -1;
   }
-  if ( a.price < b.price ){
+  if ( a.difference < b.difference ){
     return 1;
   }
   return 0;
 }
 
 function compare_ascending( a, b ) {
-  if ( a.price < b.price ){
+  if ( a.difference < b.difference ){
     return -1;
   }
-  if ( a.price > b.price ){
+  if ( a.difference > b.difference ){
     return 1;
   }
   return 0;
@@ -69,12 +69,17 @@ io.on('connection', function (socket) {
 
     // Get pair prices from binance.com
     function binance(){
+        // This new object contains only useful data in the format we want.
+        var binance_prices = {};
         var promise = new Promise((resolve, reject) => {
             // *************** USE USD NOT USDT ***********************
             binance_api.prices((error, ticker) => {
-                var binance_prices = ticker;
                 console.log('Done binance');
-                resolve('Resolve binance ');
+
+                Object.keys(ticker).forEach(function (item) {
+                    binance_prices[item.toLowerCase()] = ticker[item];
+                });
+                resolve(binance_prices);
             })
         })
         return promise
@@ -82,6 +87,7 @@ io.on('connection', function (socket) {
 
 
     function lakebtc() {
+        var lakebtc_prices = {};
         var promise = new Promise((resolve, reject) => {
             const url = "https://api.LakeBTC.com/api_v2/ticker";
             var request = https.request(url, function (response) {
@@ -91,12 +97,12 @@ io.on('connection', function (socket) {
                 });
                 response.on('end', function () {
                     var result = JSON.parse(chunks.join(''));
-                    var lakebtc_prices = result;
-                    // console.log(lakebtc_prices);
                     console.log('Done lakebtc');
 
-                    resolve('Resolve lakebtc')
-
+                    Object.keys(result).forEach(function (item) {
+                        lakebtc_prices[item] = result[item].last;
+                    });
+                    resolve(lakebtc_prices);
                 })
             })
             request.end();
@@ -132,44 +138,84 @@ io.on('connection', function (socket) {
             async_fetch();
             async function async_fetch() {
                 var run = true
-                // while(run){
-                    const promise_binace = binance();
-                    const promise_lakebtc = lakebtc();
-                    const [result_binance, result_lakebtc] = await Promise.all([promise_binace, promise_lakebtc]);
-                    // await Promise.all([promise_2])
-                    // .then(
-                        //     console.log('then'),
-                        //     console.log(result),
-                        //     // await sleep(1000),
-                        //     console.log('end then'),
-                        // )
+                const promise_binace = binance();
+                const promise_lakebtc = lakebtc();
+                const [result_binance, result_lakebtc] = await Promise.all([promise_binace, promise_lakebtc]);
+                // await Promise.all([promise_2])
+                // .then(
+                    //     console.log('then'),
+                    //     console.log(result),
+                    //     // await sleep(1000),
+                    //     console.log('end then'),
+                    // )
 
-                    console.log("All APIs called.")
-                    console.log(result_binance)
-                    console.log(result_lakebtc)
-                    // console.log('\n')
-                        // .then(
-                            //     console.log(lakebtc_prices),
-                            //
-                            //     // fetched_data_descending = JSON.parse(JSON.stringify(fetched_data)),
-                            //     // fetched_data_descending.sort(compare_descending),
-                            //     // io.emit('data_ascending', { data: fetched_data_descending }),
-                            //     // fetched_data.sort(compare_descending),
-                            //     // console.log('data_descending = \n', fetched_data_descending),
-                            //     // console.log('\n'),
-                            //     // io.emit('binance_data', { data: fetched_data_descending }),
-                            //     // // Calculate the min-max of the top platforms.
-                            //     // min = fetched_data[fetched_data.length - 1].price,
-                            //     // max = fetched_data[0].price,
-                            //     // difference = (max - min).toFixed(8),
-                            //     // difference_percentage = ((difference/max)*100).toFixed(2),
-                            //     // io.emit('difference', {data: {"difference": difference, "difference_percentage": difference_percentage}})
-                            // )
-                            // .catch(error => console.log(`Error in promises ${error}`))
-                            // run = false;
-                            // await sleep(2000);
-                // }
-                // console.log('----- End -----\n')
+                // console.log(result_binance)
+                // console.log(result_lakebtc)
+                var common_pairs_binance_lakebtc = []
+                // Go through all pairs in each platform.
+                Object.keys(result_binance).forEach(function (binance_pair) {
+                    Object.keys(result_lakebtc).forEach(function (lakebtc_pair) {
+                        if (binance_pair == lakebtc_pair){
+                            let a = parseFloat(result_binance[binance_pair]);
+                            let b = parseFloat(result_lakebtc[lakebtc_pair]);
+                            let dif = parseFloat(((Math.abs(a - b) / ((a + b) / 2)) * 100).toFixed(2));
+                            if (a > b) {
+                                let high_platform = 'Binance';
+                                let low_platform = 'Lakebtc';
+                                common_pairs_binance_lakebtc.push(
+                                    {
+                                        pair: binance_pair,
+                                        high: high_platform,
+                                        low: low_platform,
+                                        difference: dif
+                                    }
+                                )
+                            } else {
+                                let high_platform = 'Lakebtc'
+                                let low_platform = 'Binance';
+                                common_pairs_binance_lakebtc.push(
+                                    {
+                                        pair: binance_pair,
+                                        high: high_platform,
+                                        low: low_platform,
+                                        difference: dif
+                                    }
+                                )
+                            }
+                        }
+                    });
+                });
+                common_pairs_binance_lakebtc.sort(compare_descending);
+
+                console.log(common_pairs_binance_lakebtc);
+
+                console.log("All APIs called.")
+                io.emit('data_ascending', { data: common_pairs_binance_lakebtc });
+
+                // console.log(result_binance)
+                // console.log(result_lakebtc)
+
+                // console.log('\n')
+                    // .then(
+                        //     console.log(lakebtc_prices),
+                        //
+                        //     // fetched_data_descending = JSON.parse(JSON.stringify(fetched_data)),
+                        //     // fetched_data_descending.sort(compare_descending),
+                        //     // io.emit('data_ascending', { data: fetched_data_descending }),
+                        //     // fetched_data.sort(compare_descending),
+                        //     // console.log('data_descending = \n', fetched_data_descending),
+                        //     // console.log('\n'),
+                        //     // io.emit('binance_data', { data: fetched_data_descending }),
+                        //     // // Calculate the min-max of the top platforms.
+                        //     // min = fetched_data[fetched_data.length - 1].price,
+                        //     // max = fetched_data[0].price,
+                        //     // difference = (max - min).toFixed(8),
+                        //     // difference_percentage = ((difference/max)*100).toFixed(2),
+                        //     // io.emit('difference', {data: {"difference": difference, "difference_percentage": difference_percentage}})
+                        // )
+                        // .catch(error => console.log(`Error in promises ${error}`))
+                        // run = false;
+                        // await sleep(2000);
             }
             fetch_prices();
 

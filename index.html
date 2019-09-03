@@ -56,113 +56,20 @@
 </head>
 <body>
 
-
-	<div class="container">
-		<div class="col-md-3">
-			<!-- Heading -->
-			<h1 class="font">
-				Platform
-			</h1>
-			<hr>
-
-			<div>
-				<!-- Text area where admin will write quote -->
-				<textarea id="high_platform"></textarea>
-				<br>
-				<br>
-			</div>
-		</div>
-		<div class="col-md-2">
-			<!-- Heading -->
-			<h1 class="font">
-				Price (h)
-			</h1>
-			<hr>
-
-			<div>
-				<!-- Text area where admin will write quote -->
-				<textarea id="high_price"></textarea>
-				<br>
-				<br>
-			</div>
-		</div>
-
-		<div class="col-md-2">
-			<!-- Heading -->
-			<h1 class="font">
-				Difference
-			</h1>
-			<hr>
-
-			<div>
-				<!-- Text area where admin will write quote -->
-				<textarea id="difference"></textarea>
-				<br>
-				<br>
-			</div>
-		</div>
-		<div class="col-md-2">
-			<!-- Heading -->
-			<h1 class="font">
-				Price (l)
-			</h1>
-			<hr>
-
-			<div>
-				<!-- Text area where admin will write quote -->
-				<textarea id="low_price_0"></textarea>
-				<textarea id="low_price_1"></textarea>
-				<textarea id="low_price_2"></textarea>
-				<textarea id="low_price_3"></textarea>
-				<textarea id="low_price_4"></textarea>
-				<textarea id="low_price_5"></textarea>
-				<textarea id="low_price_6"></textarea>
-				<br>
-				<br>
-				<!-- Quotes Tranferred to server when button is clicked via "new" event-->
-				<!--
-				<div>
-					<input type="button" id="aquote" value="Add your Quote">  </button>
-				</div>
-				-->
-			</div>
-		</div>
-		<div class="col-md-3">
-			<!-- Heading -->
-			<h1 class="font">
-				Platform
-			</h1>
-			<hr>
-
-			<div>
-				<!-- Text area where admin will write quote -->
-				<textarea id="low_platform_0"></textarea>
-				<textarea id="low_platform_1"></textarea>
-				<textarea id="low_platform_2"></textarea>
-				<textarea id="low_platform_3"></textarea>
-				<textarea id="low_platform_4"></textarea>
-				<textarea id="low_platform_5"></textarea>
-				<textarea id="low_platform_6"></textarea>
-				<br>
-				<br>
-			</div>
-		</div>
-	</div>
 	<div class="container">
 		<div class="col-md-12">
 			<div>
 				<table class="table" id="my_table">
 					<tr>
-						<td><h1 class="font">'Platform</h1></td>
-						<td><h1 class="font">Price</h1></td>
-						<td><h1 class="font">Difference</h1></td>
-						<td><h1 class="font">Price</h1></td>
 						<td><h1 class="font">Platform</h1></td>
+						<td><h1 class="font">Pair</h1></td>
+						<td><h1 class="font">Difference</h1></td>
 					</tr>
 				</table>
 			</div>
 		</div>
 	</div>
+
 	<script>
 	//Jquery code starts
 	$('document').ready(function(){
@@ -210,24 +117,18 @@
 
 		  $('#my_table tbody').html(
 			  '<tr><td><h1 class="font">' + 'Platform' +
-			  '</h1></td><td><h1 class="font">' + 'Price' +
+			  '</h1></td><td><h1 class="font">' + 'Pair' +
 			  '</h1></td><td><h1 class="font">' + 'Difference' +
-			  '</h1></td><td><h1 class="font">' + 'Price' +
-			  '</h1></td><td><h1 class="font">' + 'Platform' +
 			  '</h1></td></tr>');
+
+
 		  for (var i=0; i<input.data.length; i++){
 		    $('#my_table').append(
-				'<tr><td>' + input.data[input.data.length - 1].platform_name +
-				'</td><td>' + input.data[input.data.length - 1].price +
-				'</td><td>' + '###%' +
-				'</td><td>' + input.data[i].price +
-				'</td><td>' + input.data[i].platform_name +
+				'<tr class="text-center"><td>' + input.data[i].high + '	--> ' + input.data[i].low +
+				'</td><td>' + input.data[i].pair +
+				'</td><td>' + input.data[i].difference + ' %' +
 				'</td></tr>');
 		  }
-	  })
-	  socket.on('difference' , function(input){
-	  	// console.log('data = ' + input.data);
-	  	$('#difference').val(input.data.difference_percentage + "% (" + input.data.difference + ")");
 	  })
 	})
 	//jquery code ends
