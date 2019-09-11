@@ -5,6 +5,7 @@ var request = require("request");
 // var mongo = require('mongodb');
 var Promise = require('promise');
 
+const schedule = require('node-schedule')
 
 
 var api = require('./binance_api.js');
@@ -20,6 +21,9 @@ const fetch = require('node-fetch');
 var pr = require('promise');
 
 var tools = require('./tools.js');
+
+const CoinbasePro = require('coinbase-pro');
+const publicClient = new CoinbasePro.PublicClient();
 
 //server listening at 127.0.0.1:3000
 server.listen(3000);
@@ -81,10 +85,9 @@ const binance_api = require('node-binance-api')().options({
 
 // Get pair prices from binance.com
 function binance(){
-    // This new object contains only useful data in the format we want.
+    // Get the price of all pairs from binance.
     var binance_prices = {};
     var promise = new Promise((resolve, reject) => {
-        // *************** USE USD NOT USDT ***********************
         binance_api.prices((error, ticker) => {
             Object.keys(ticker).forEach(function (item) {
                 binance_prices[item.toLowerCase()] = ticker[item];
@@ -101,6 +104,7 @@ function binance(){
 
 
 function lakebtc() {
+    // Get the price of all pairs from lakebtc.
     var lakebtc_prices = {};
     var promise = new Promise((resolve, reject) => {
         const url = "https://api.LakeBTC.com/api_v2/ticker";
@@ -122,84 +126,230 @@ function lakebtc() {
     return promise
 };
 
-function fetch_prices() {
+function get_coinbase_pairs() {
+    // Get the all coins pairs from Coinbase.
+    var coinbase_pairs = [];
+    promise = new Promise((resolve, reject) => {
+        publicClient
+          .getProducts()
+          .then(data => {
+              // Gather all pairs of Coinbase in an array.
+              Object.keys(data).forEach(function (index) {
+                  coinbase_pairs.push(data[index].id)
+              })
+              resolve(coinbase_pairs)
+          })
+          .catch(error => console.log(error))
+    })
+    return promise
+};
 
-    // const result123 = await promise123;
+function coinbase_single_pair(pair) {
+    // Get the price of all pairs from coinbase.
+    // pairs = ['BTC-USD', 'ETH-USD'];
+    // pair = 'BTC-USD';
+    var pairs_obj = {}
+
+    promise = new Promise((resolve, reject) => {
+        publicClient
+          .getProductTicker(pair)
+          .then(data => {
+              resolve(data.price)
+          })
+          .catch(error => console.log(error))
+    })
+    return promise
+}
+
+function coinbase(){
+    promise = new Promise((resolve, reject) => {
+
+        const start = async () => {
+            // Split the pairs of Binance in packs of 6 items because more than 6 items can't be called in a (burst) API
+            // call.
+            var coinbase_pairs_pack = [
+                [
+                'ETH-GBP',
+                'XLM-EUR',
+                'XLM-BTC',
+                'XTZ-BTC',
+                'ETC-EUR',
+                'BTC-USD',
+            ],
+            [
+                'LINK-ETH',
+                'LINK-USD',
+                'ETC-BTC',
+                'ETH-EUR',
+                'XRP-USD',
+                'ETH-USDC'
+            ],
+            [
+                'ETC-GBP',
+                'ETH-USD',
+                'DAI-USDC',
+                'LOOM-USDC',
+                'XRP-EUR',
+                'BTC-GBP'
+            ],
+            [
+                'ZRX-BTC',
+                'BTC-EUR',
+                'XLM-USD',
+                'EOS-BTC',
+                'BTC-USDC',
+                'BCH-BTC'
+            ],
+            [
+                'ALGO-USD',
+                'LTC-GBP',
+                'BAT-USDC',
+                'BCH-GBP',
+                'LTC-USD',
+                'ZEC-BTC',
+            ],
+            [
+                'MANA-USDC',
+                'DNT-USDC',
+                'ZRX-EUR',
+                'GNT-USDC',
+                'ETC-USD',
+                'EOS-EUR',
+            ],
+            [
+                'BCH-EUR',
+                'XRP-BTC',
+                'LTC-BTC',
+                'ZEC-USDC',
+                'EOS-USD',
+                'BCH-USD'
+            ],
+            [
+                'ETH-DAI',
+                'CVC-USDC',
+                'ETH-BTC',
+                'BAT-ETH',
+                'LTC-EUR',
+                'REP-USD',
+            ],
+            [
+                'XTZ-USD',
+                'REP-BTC',
+                'ZRX-USD'
+            ]]
+
+            var promises = [];
+            var prices = {};
+            for (coinbase_pairs of coinbase_pairs_pack) {
+                promises.push(coinbase_pairs.map(async (pair, idx) => {
+                    // console.log(`Received Todo ${idx+1+round}:`, await coinbase_single_pair(pair))
+                    // prices.push(await coinbase_single_pair(pair));
+
+                    // Edit pair name from 'BTC-USD' to 'btcusd'
+                    let pair_full = pair.toLowerCase().replace(/[^a-zA-Z0-9]+/g, "");
+                    prices[pair_full] = await coinbase_single_pair(pair);
+                }));
+                await sleep(2000);
+            }
+            resolve(prices);
+        }
+        start()
+    });
+    return promise
+}
+
+const init = async() => {
+    const promise_coinbase_pairs = get_coinbase_pairs();
+    const [coinbase_pairs] = await Promise.all([promise_coinbase_pairs]);
+    return coinbase_pairs
+}
+
+const first_run = true
+function fetch_prices() {
     setTimeout(() => {
         async_fetch();
         async function async_fetch() {
-            var run = true
-            const promise_binace = binance();
+            const platform_names = [
+                'Coinbase',
+                'Binance',
+                'Lakebtc',
+            ]
+            const promise_coinbase = coinbase();
+            const promise_binance = binance();
             const promise_lakebtc = lakebtc();
-            const [result_binance, result_lakebtc] = await Promise.all([promise_binace, promise_lakebtc]);
-            var common_pairs_binance_lakebtc = []
-            // Go through all pairs in each platform.
-            Object.keys(result_binance).forEach(function (binance_pair) {
-                Object.keys(result_lakebtc).forEach(function (lakebtc_pair) {
-                    if (binance_pair == lakebtc_pair){
-                        let a = parseFloat(result_binance[binance_pair]);
-                        let b = parseFloat(result_lakebtc[lakebtc_pair]);
-                        let dif = parseFloat(((Math.abs(a - b) / ((a + b) / 2)) * 100).toFixed(2));
-                        if (a > b) {
-                            let high_platform = 'Binance';
-                            let low_platform = 'Lakebtc';
-                            common_pairs_binance_lakebtc.push(
-                                {
-                                    pair: binance_pair,
-                                    high: high_platform,
-                                    low: low_platform,
-                                    difference: dif
-                                }
-                            )
-                        } else {
-                            let high_platform = 'Lakebtc'
-                            let low_platform = 'Binance';
-                            common_pairs_binance_lakebtc.push(
-                                {
-                                    pair: binance_pair,
-                                    high: high_platform,
-                                    low: low_platform,
-                                    difference: dif
-                                }
-                            )
+            const results = await Promise.all([
+                        promise_binance,
+                        promise_lakebtc,
+                        promise_coinbase
+                    ]);
+            function get_common_pairs(platform_data_1, platform_data_2, platform_name_1, platform_2){
+                // Get common pairs between two excange platforms.
+
+                var common_pairs_binance_lakebtc = []
+                // Go through all pairs in each platform.
+                Object.keys(platform_data_1).forEach(function (platform_pair_1) {
+                    Object.keys(platform_data_2).forEach(function (platform_pair_2) {
+                        if (platform_pair_1 == platform_pair_2){
+                            let a = parseFloat(platform_data_1[platform_pair_1]);
+                            let b = parseFloat(platform_data_2[platform_pair_2]);
+                            let dif = parseFloat(((Math.abs(a - b) / ((a + b) / 2)) * 100).toFixed(2));
+                            if (a > b) {
+                                let high_platform = platform_name_1;
+                                let low_platform = platform_name_2;
+                                common_pairs_binance_lakebtc.push(
+                                    {
+                                        pair: platform_pair_1,
+                                        high: high_platform,
+                                        low: low_platform,
+                                        difference: dif
+                                    }
+                                )
+                            } else {
+                                let high_platform = platform_name_2;
+                                let low_platform = platform_name_1;
+                                common_pairs_binance_lakebtc.push(
+                                    {
+                                        pair: platform_pair_1,
+                                        high: high_platform,
+                                        low: low_platform,
+                                        difference: dif
+                                    }
+                                )
+                            }
                         }
-                    }
+                    });
                 });
-            });
-            common_pairs_binance_lakebtc.sort(compare_descending);
+                return common_pairs_binance_lakebtc
+            }
 
+            var common_pairs = []
+            for (let idx_1=0; idx_1<results.length - 1; idx_1++){
+                for (let idx_2=(idx_1+1); idx_2<results.length; idx_2++){
+                    common_pairs.push(await get_common_pairs(
+                        platform_data_1=results[idx_1],
+                        platform_data_2=results[idx_2],
+                        platform_name_1=platform_names[idx_1],
+                        platform_name_2=platform_names[idx_2]));
+                }
+            }
+            // Convert 2d to 1d array, because each platform comparison results are in seperate arrays.
+            common_pairs = [].concat(...common_pairs);
+            common_pairs.sort(compare_descending);
             console.log("All APIs called.")
-
-            io.emit('data_ascending', { data: common_pairs_binance_lakebtc });
-
-            // console.log(result_binance)
-            // console.log(result_lakebtc)
-
-            // console.log('\n')
-                // .then(
-                    //     console.log(lakebtc_prices),
-                    //
-                    //     // fetched_data_descending = JSON.parse(JSON.stringify(fetched_data)),
-                    //     // fetched_data_descending.sort(compare_descending),
-                    //     // io.emit('data_ascending', { data: fetched_data_descending }),
-                    //     // fetched_data.sort(compare_descending),
-                    //     // console.log('data_descending = \n', fetched_data_descending),
-                    //     // console.log('\n'),
-                    //     // io.emit('binance_data', { data: fetched_data_descending }),
-                    //     // // Calculate the min-max of the top platforms.
-                    //     // min = fetched_data[fetched_data.length - 1].price,
-                    //     // max = fetched_data[0].price,
-                    //     // difference = (max - min).toFixed(8),
-                    //     // difference_percentage = ((difference/max)*100).toFixed(2),
-                    //     // io.emit('difference', {data: {"difference": difference, "difference_percentage": difference_percentage}})
-                    // )
-                    // .catch(error => console.log(`Error in promises ${error}`))
-                    // run = false;
-                    // await sleep(2000);
+            io.emit('data_ascending', { data: common_pairs });
         }
         // Repeat the call.
         fetch_prices();
-    }, 5000);
+    }, 20000);
 };
-// Call once to begin the infinite loop.
-fetch_prices();
+
+const main = async () => {
+    // coinbase()
+    // coinbase_pairs = await init()
+    // coinbase_ws(coinbase_pairs)
+    // console.log(coinbase_pairs)
+    // await sleep(1000)
+    fetch_prices()
+}
+
+main()

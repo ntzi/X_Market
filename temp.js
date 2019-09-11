@@ -326,48 +326,64 @@ function binance(){
     })
 }
 
-function lakebtc() {
+const CoinbasePro = require('coinbase-pro');
+const publicClient = new CoinbasePro.PublicClient();
+
+function get_coinbase_pairs() {
+    var coinbase_pairs = [];
     promise = new Promise((resolve, reject) => {
-        const url = "https://api.LakeBTC.com/api_v2/ticker";
-        var request = https.request(url, function (response) {
-            var chunks = [];
-            response.on("data", function (chunk) {
-                chunks.push(chunk);
-            });
-            response.on('end', function () {
-                var result = JSON.parse(chunks.join(''));
-                console.log(result)
-                // obj_index = fetched_data.findIndex((obj => obj.platform_name == 'lakebtc'));
-                // // console.log(result.BTC_USD)
-                // // The best ask price. The cheapest price that you can buy coin right now.
-                // price = result.bids[0][0];
-                // // Convert string to float.
-                // price = parseFloat(price);
-                // //Update price in array.
-                // fetched_data[obj_index].price = price;
-            })
-        })
-        request.end();
+        publicClient
+          .getProducts()
+          .then(data => {
+              // Gather all pairs of Coinbase in an array.
+              Object.keys(data).forEach(function (index) {
+                  coinbase_pairs.push(data[index].id)
+              })
+              resolve(coinbase_pairs)
+          })
+          .catch(error => console.log(error))
     })
     return promise
 };
 
-// binance()
+function coinbase_ws() {
+    promise = new Promise((resolve, reject) => {
+        const websocket = new CoinbasePro.WebsocketClient(
+          ['BTC-USD', 'ETH-USD']);
+
+        websocket.on('message', data => {
+          /* work with data */
+          if (data.product_id == 'BTC-USD'){
+              console.log(data.price)
+          }
+          // console.log(data.product_id)
+        });
+        websocket.on('error', err => {
+          /* handle error */
+        });
+        websocket.on('close', () => {
+          /* ... */
+        });
+    });
+}
+
+
+// ZEC-BTC LTC-GBP
+// coinbase()
 // lakebtc()
 
 
 
 
-const resolvedProm = Promise.resolve(33);
 
-let thenProm = resolvedProm.then(value => {
-    console.log("this gets called after the end of the main stack. the value received and returned is: " + value);
-    return value;
-});
-// instantly logging the value of thenProm
-console.log(thenProm);
 
-// using setTimeout we can postpone the execution of a function to the moment the stack is empty
-setTimeout(() => {
-    console.log(thenProm);
-});
+temp_results = ['A', 'B', 'C']
+temp_names = ['1', '2', '3']
+
+for (let idx_1=0; idx_1<temp_results.length - 1; idx_1++){
+    for (let idx_2=(idx_1+1); idx_2<temp_results.length; idx_2++){
+
+        console.log('idx_1 = '+ idx_1 + ' idx_2 = ' + idx_2)
+        console.log(temp_names[idx_1], temp_names[idx_2])
+    }
+}
