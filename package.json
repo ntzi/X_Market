@@ -1,33 +1,37 @@
 {
-  "name": "x-market-mvp",
-  "version": "0.3.0",
-  "description": "A Node JS App for cryptocoin prices",
-  "engines": {
-      "node": "8.x"
-  },
+  "name": "x_market",
+  "version": "1.0.0",
+  "description": "",
   "main": "server.js",
-  "scripts": {
-    "start": "node server.js"
-  },
   "dependencies": {
-    "express": "^4.15.2"
-  },
-  "devDependencies": {
-    "request": "^2.81.0",
-    "tape": "^4.7.0",
+    "bittrex-api-node": "^0.0.6",
+    "coinbase-pro": "^0.9.0",
+    "coinbase-pro-api": "^1.0.2",
+    "coingecko-api": "^1.0.5",
+    "express": "^4.17.1",
+    "node-bittrex-api": "^0.8.3",
+    "node-fetch": "^2.6.0",
+    "node-kraken-api": "^0.4.1",
+    "node-binance-api": "^0.9.5",
     "promise": "^8.0.3",
-    "socket.io": "^2.2.0",
-    "async": "^2.6.3",
-    "coinbase-pro": "^0.9.0"
+    "request-promise": "^4.2.4",
+    "mongodb": "^3.3.0-beta2",
+    "node-schedule": "^1.3.2",
+    "socket.io": "^2.2.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/ntzi/X_Market"
+    "url": "git+https://github.com/ntzi/X_Market.git"
   },
-  "keywords": [
-    "node",
-    "heroku",
-    "express"
-  ],
-  "license": "MIT"
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ntzi/X_Market/issues"
+  },
+  "homepage": "https://github.com/ntzi/X_Market#readme"
 }

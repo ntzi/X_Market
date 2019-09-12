@@ -9,8 +9,13 @@ const CoinbasePro = require('coinbase-pro');
 const publicClient = new CoinbasePro.PublicClient();
 // var tools = require('./tools.js');
 
-//server listening at 127.0.0.1:3000
-server.listen(3000);
+let port = process.env.PORT;
+if (port == null || port == "") {
+  port = 3000;
+}
+
+//server listening localy at 127.0.0.1:3000
+server.listen(port);
 console.log("Server listening at: 3000");
 //Handling the default route
 app.get('/', function (req, res) {
