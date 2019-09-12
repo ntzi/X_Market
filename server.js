@@ -1,29 +1,13 @@
-// Fetch prices of BTC-USD from 8 platforms and sort them.
-
-var path = require('path');
-var request = require("request");
 // var mongo = require('mongodb');
 var Promise = require('promise');
-
-const schedule = require('node-schedule')
-
-
-var api = require('./binance_api.js');
 const https = require('https');
-
-//Including the required files
 var app = require('express')();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
-const rp = require('request-promise');
 var async = require("async");
-const fetch = require('node-fetch');
-var pr = require('promise');
-
-var tools = require('./tools.js');
-
 const CoinbasePro = require('coinbase-pro');
 const publicClient = new CoinbasePro.PublicClient();
+// var tools = require('./tools.js');
 
 //server listening at 127.0.0.1:3000
 server.listen(3000);
@@ -126,6 +110,7 @@ function lakebtc() {
     return promise
 };
 
+// Unused
 function get_coinbase_pairs() {
     // Get the all coins pairs from Coinbase.
     var coinbase_pairs = [];

@@ -1,0 +1,33 @@
+{
+  "name": "node-js-getting-started",
+  "version": "0.3.0",
+  "description": "A Node JS App for cryptocoin prices",
+  "engines": {
+    "node": "10.x"
+  },
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.15.2"
+  },
+  "devDependencies": {
+    "request": "^2.81.0",
+    "tape": "^4.7.0",
+    "promise": "^8.0.3",
+    "socket.io": "^2.2.0",
+    "async": "^2.6.3",
+    "coinbase-pro": "^0.9.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ntzi/X_Market"
+  },
+  "keywords": [
+    "node",
+    "heroku",
+    "express"
+  ],
+  "license": "MIT"
+}
