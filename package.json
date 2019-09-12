@@ -3,7 +3,7 @@
   "version": "0.3.0",
   "description": "A Node JS App for cryptocoin prices",
   "engines": {
-      "node": "10.x"
+      "node": "8.x"
   },
   "main": "server.js",
   "scripts": {
