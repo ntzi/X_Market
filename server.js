@@ -15,7 +15,7 @@ if (port == null || port == "") {
 }
 
 //server listening localy at 127.0.0.1:3000
-server.listen(port);
+server.listen(3000);
 console.log("Server listening at: 3000");
 //Handling the default route
 app.get('/', function (req, res) {
