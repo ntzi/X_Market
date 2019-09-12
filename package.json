@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
+  "engines": {
+      "node": "10.x"
+  },
   "dependencies": {
     "bittrex-api-node": "^0.0.6",
     "coinbase-pro": "^0.9.0",
