@@ -76,7 +76,8 @@
 	//Jquery code starts
 	$('document').ready(function(){
 		var PORT = "<%= port %>";
-		const domain = 'http://localhost:'+PORT;
+		// const domain = 'http://localhost:'+PORT;
+		const domain = 'https://x-market-mvp.herokuapp.com/';
 		//Connecting the socket to host and port
 		var socket = io.connect(domain);
 			socket.on('welcome', function (data) {
