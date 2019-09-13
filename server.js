@@ -18,6 +18,8 @@ app.set('view engine', 'ejs')
 // Node on local execution ($ node server.js) uses port 3000.
 const PORT = process.env.PORT || 3000
 
+console.log(process.env)
+
 server.listen(PORT, () => console.log(`Listening on ${ PORT }`))
 // console.log("Server listening at: 3000");
 // Handling the default route
