@@ -75,72 +75,66 @@
 
 	//Jquery code starts
 	$('document').ready(function(){
-	//Connecting the socket to host and port
 		var PORT = "<%= port %>";
-		console.log(PORT)
-
-		// const PORT = process.env.PORT;
-		// console.log(PORT)
 		const domain = 'http://localhost:'+PORT;
-		console.log(domain)
-	 var socket = io.connect(domain);
-	   socket.on('welcome', function (data) {
-
-	  });
-    socket.on('binance_data' , function(input){
-  	  console.log('data = ' + input.data);
-	  $('#high_platform').val(input.data[0].platform_name);
-	  // $('#hight_pair_name').val(input.data.symbol);
-	  $('#high_price').val(input.data[0].price);
-	  // $('#low_platform_name_1').val('Binance');
-	  // $('#low_price_1').val(input.data.price);
-
-
-	  // Fetch data on button click.
-	  // $('#aquote').click(function(){
-		//   // data = $('#qcontent').val()
-		//   // console.log(data);
-		//   console.log('Button clicked');
-		//   socket.emit('get_data');
-		//   socket.on('server_data' , function(input){
-		// 	  console.log('data = ' + input.data);
-		// 	  $('#qcontent').val(input.data);
-		//   })
+		//Connecting the socket to host and port
+		var socket = io.connect(domain);
+			socket.on('welcome', function (data) {
+			});
+		socket.on('binance_data' , function(input){
+	  	  console.log('data = ' + input.data);
+		  $('#high_platform').val(input.data[0].platform_name);
+		  // $('#hight_pair_name').val(input.data.symbol);
+		  $('#high_price').val(input.data[0].price);
+		  // $('#low_platform_name_1').val('Binance');
+		  // $('#low_price_1').val(input.data.price);
 
 
-		  //
-		  // // data = 'empty';
-		  // //Emitting the event and passing the quote to the server
-		  // socket.on('pull_data', function () {
-		  // 	socket.emit('server_data' , { quote: data })
-		  // 	console.log(data);
-		  // 	$('#qcontent').val(data)
-			// })
-
-		  // $('#qcontent').val('nikos');
-	  })
-	  socket.on('data_ascending' , function(input){
-		  // console.log('data = ' + input.data);
-		  $('#low_platform_0').val(input.data[0].platform_name);
-		  $('#low_price_0').val(input.data[0].price);
-
-		  $('#my_table tbody').html(
-			  '<tr><td><h1 class="font">' + 'Platform' +
-			  '</h1></td><td><h1 class="font">' + 'Pair' +
-			  '</h1></td><td><h1 class="font">' + 'Difference' +
-			  '</h1></td></tr>');
+		  // Fetch data on button click.
+		  // $('#aquote').click(function(){
+			//   // data = $('#qcontent').val()
+			//   // console.log(data);
+			//   console.log('Button clicked');
+			//   socket.emit('get_data');
+			//   socket.on('server_data' , function(input){
+			// 	  console.log('data = ' + input.data);
+			// 	  $('#qcontent').val(input.data);
+			//   })
 
 
-		  for (var i=0; i<input.data.length; i++){
-		    $('#my_table').append(
-				'<tr class="text-center"><td>' + input.data[i].high + '	--> ' + input.data[i].low +
-				'</td><td>' + input.data[i].pair +
-				'</td><td>' + input.data[i].difference + ' %' +
-				'</td></tr>');
-		  }
-	  })
-	})
-	//jquery code ends
+			  //
+			  // // data = 'empty';
+			  // //Emitting the event and passing the quote to the server
+			  // socket.on('pull_data', function () {
+			  // 	socket.emit('server_data' , { quote: data })
+			  // 	console.log(data);
+			  // 	$('#qcontent').val(data)
+				// })
+
+			  // $('#qcontent').val('nikos');
+		  })
+		  socket.on('data_ascending' , function(input){
+			  // console.log('data = ' + input.data);
+			  $('#low_platform_0').val(input.data[0].platform_name);
+			  $('#low_price_0').val(input.data[0].price);
+
+			  $('#my_table tbody').html(
+				  '<tr><td><h1 class="font">' + 'Platform' +
+				  '</h1></td><td><h1 class="font">' + 'Pair' +
+				  '</h1></td><td><h1 class="font">' + 'Difference' +
+				  '</h1></td></tr>');
+
+
+			  for (var i=0; i<input.data.length; i++){
+			    $('#my_table').append(
+					'<tr class="text-center"><td>' + input.data[i].high + '	--> ' + input.data[i].low +
+					'</td><td>' + input.data[i].pair +
+					'</td><td>' + input.data[i].difference + ' %' +
+					'</td></tr>');
+			  }
+		  })
+		})
+		//jquery code ends
 	</script>
 
 </body>
