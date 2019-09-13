@@ -74,7 +74,14 @@
 	//Jquery code starts
 	$('document').ready(function(){
 	//Connecting the socket to host and port
-	 var socket = io.connect('http://localhost:3000');
+		var port = "{{ port }}";
+		console.log(port);
+
+		// const PORT = process.env.PORT;
+		// console.log(PORT)
+		const domain = 'http://localhost:'+PORT;
+		console.log(domain)
+	 var socket = io.connect(domain);
 	   socket.on('welcome', function (data) {
 
 	  });

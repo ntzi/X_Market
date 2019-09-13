@@ -1,7 +1,8 @@
 // var mongo = require('mongodb');
 var Promise = require('promise');
 const https = require('https');
-var app = require('express')();
+var express = require('express');
+var app = express();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
 var async = require("async");
@@ -22,7 +23,7 @@ server.listen(PORT, () => console.log(`Listening on ${ PORT }`))
 // console.log("Server listening at: 3000");
 //Handling the default route
 app.get('/', function (req, res) {
-  res.sendFile(__dirname + '/index.html');
+  res.render('index');
 });
 
 
