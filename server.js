@@ -10,6 +10,7 @@ const CoinbasePro = require('coinbase-pro');
 const publicClient = new CoinbasePro.PublicClient();
 // var tools = require('./tools.js');
 
+// 'process.env.PORT' will set the port using Heroku, else use the port 3000.
 const PORT = process.env.PORT || 3000
 
 // let port = process.env.PORT;
@@ -21,10 +22,19 @@ const PORT = process.env.PORT || 3000
 // server.listen(3000);
 server.listen(PORT, () => console.log(`Listening on ${ PORT }`))
 // console.log("Server listening at: 3000");
-//Handling the default route
-app.get('/', function (req, res) {
-  res.render('index');
-});
+// Handling the default route
+
+
+app.set('view engine', 'ejs')
+app.get('/', (req, res) =>
+    res.render('pages/index', {port:PORT})
+)
+
+//
+// app.get('/', function (req, res) {
+//     var name = 'hello';
+//     res.render(__dirname + "index.html", {name:name});
+// });
 
 
 // ----- ----- Tools ----- -----

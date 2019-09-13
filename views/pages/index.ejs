@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 <head>
 	<title> Crypto MVP </title>
@@ -71,11 +72,12 @@
 	</div>
 
 	<script>
+
 	//Jquery code starts
 	$('document').ready(function(){
 	//Connecting the socket to host and port
-		var port = "{{ port }}";
-		console.log(port);
+		var PORT = "<%= port %>";
+		console.log(PORT)
 
 		// const PORT = process.env.PORT;
 		// console.log(PORT)
