@@ -75,11 +75,12 @@
 
 	//Jquery code starts
 	$('document').ready(function(){
-		var PORT = "<%= port %>";
+		const ADDRESS = "<%= address %>";
+		// const domain = "http://127.0.0.1:"+PORT;
 		// const domain = 'http://localhost:'+PORT;
-		const domain = 'https://x-market-mvp.herokuapp.com/';
+		// const domain = 'https://x-market-mvp.herokuapp.com/';
 		//Connecting the socket to host and port
-		var socket = io.connect(domain);
+		var socket = io.connect(ADDRESS);
 			socket.on('welcome', function (data) {
 			});
 		socket.on('binance_data' , function(input){

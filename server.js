@@ -18,16 +18,25 @@ app.set('view engine', 'ejs')
 // Node on local execution ($ node server.js) uses port 3000.
 const PORT = process.env.PORT || 3000
 
-console.log(process.env)
-
 server.listen(PORT, () => console.log(`Listening on ${ PORT }`))
 // console.log("Server listening at: 3000");
 // Handling the default route
 
+
+var os = require( 'os' );
+
+var networkInterfaces = os.networkInterfaces( );
+address = networkInterfaces.lo[0].address;
+if (address == '127.0.0.1') {
+    address = address+':'+PORT
+}
+console.log(address)
 // Send the port tha the server is using to the user in order to set up connection.
 app.get('/', (req, res) =>
-    res.render('pages/index', {port:PORT})
+    res.render('pages/index', {address:address})
 )
+
+
 
 
 
