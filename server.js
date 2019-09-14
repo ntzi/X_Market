@@ -6,6 +6,7 @@ var app = express();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
 var async = require("async");
+var os = require( 'os' );
 const CoinbasePro = require('coinbase-pro');
 const publicClient = new CoinbasePro.PublicClient();
 // var tools = require('./tools.js');
@@ -19,22 +20,14 @@ app.set('view engine', 'ejs')
 const PORT = process.env.PORT || 3000
 
 server.listen(PORT, () => console.log(`Listening on ${ PORT }`))
-// console.log("Server listening at: 3000");
-// Handling the default route
-
-
-var os = require( 'os' );
-
-var networkInterfaces = os.networkInterfaces( );
-address = networkInterfaces.lo[0].address;
+// Ports 3000 and 5000 are used (most of the time) on local runs.
 if (PORT == '3000'|| PORT == '5000') {
     address = address+':'+PORT
 } else {
     address = 'https://x-market-mvp.herokuapp.com/';
 }
 
-console.log(address)
-// Send the port tha the server is using to the user in order to set up connection.
+// Send the address of the server to the client in order to set up connection.
 app.get('/', (req, res) =>
     res.render('pages/index', {address:address})
 )
