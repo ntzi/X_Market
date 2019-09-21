@@ -1,3 +1,4 @@
+
 // var mongo = require('mongodb');
 var Promise = require('promise');
 const https = require('https');
@@ -7,9 +8,11 @@ var server = require('http').Server(app);
 var io = require('socket.io')(server);
 var async = require("async");
 var os = require( 'os' );
+var mongoose = require('mongoose');
 const CoinbasePro = require('coinbase-pro');
 const publicClient = new CoinbasePro.PublicClient();
 // var tools = require('./tools.js');
+
 
 app.set('view engine', 'ejs')
 
@@ -22,7 +25,7 @@ const PORT = process.env.PORT || 3000
 server.listen(PORT, () => console.log(`Listening on ${ PORT }`))
 // Ports 3000 and 5000 are used (most of the time) on local runs.
 if (PORT == '3000'|| PORT == '5000') {
-    address = address+':'+PORT
+    address = 'http://localhost:'+':'+PORT
 } else {
     address = 'https://x-market-mvp.herokuapp.com/';
 }
@@ -34,6 +37,81 @@ app.get('/', (req, res) =>
 
 
 
+
+
+//-----------------------------------------
+//Mongoose Settings
+//-----------------------------------------
+// const {User} = require("./models");
+// const mongoose = require("mongoose");
+//
+// console.log("mongoose stuff intialized");
+//
+// app.use((req, res, next) => {
+//   console.log("use for mongoose callback");
+//   if (mongoose.connection.readyState) {
+//     console.log("if (mongoose.connection.readyState)");
+//     next();
+//   } else {
+//     console.log("else (mongoose.connection.readyState)");
+//     require("./mongo")().then(() => next());
+//     console.log("else (mongoose.connection.readyState)");
+//   }
+// });
+
+
+
+// connect Mongoose to your DB
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/x-market-mvp');
+// console.log('mogodb_uri= '+process.env.MONGODB_URI)
+
+
+var db = mongoose.connection;
+db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', function() {
+      // we're connected!
+      console.log('We are connected!')
+
+      var kittySchema = new mongoose.Schema({
+          // name: String,
+          pair: String,
+          high: String,
+          low: String,
+          difference: Number
+
+      });
+      var Kitten = mongoose.model('Kitten', kittySchema);
+
+      var silence = new Kitten({
+          pair: 'platform_pair_1',
+          high: 'high_platform',
+          low: 'low_platform',
+          difference: 10
+
+      });
+      console.log(silence); // 'Silence'
+
+      // silence.save(function (err, silence) {
+      //     if (err) return console.error(err);
+      //     silence.name
+      // });
+
+      // Delete one entry.
+      // Kitten.findOneAndRemove({ name: 'Silence' }, function(err) {
+      //     if (!err) {
+      //         console.log('Deleted!');
+      //     }
+      //     else {
+      //         console.log('error');
+      //     }
+      // });
+
+      Kitten.find(function (err, kittens) {
+          if (err) return console.error(err);
+          console.log(kittens);
+      })
+
+});
 
 
 // ----- ----- Tools ----- -----
