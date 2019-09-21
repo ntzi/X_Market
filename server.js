@@ -113,6 +113,7 @@ db.once('open', function() {
 
 });
 
+console.log('\nSTART\n')
 
 // ----- ----- Tools ----- -----
 function sleep(ms) {
