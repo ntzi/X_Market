@@ -25,7 +25,7 @@ const PORT = process.env.PORT || 3000
 server.listen(PORT, () => console.log(`Listening on ${ PORT }`))
 // Ports 3000 and 5000 are used (most of the time) on local runs.
 if (PORT == '3000'|| PORT == '5000') {
-    address = 'http://localhost:'+':'+PORT
+    address = 'http://localhost:'+PORT
 } else {
     address = 'https://x-market-mvp.herokuapp.com/';
 }
@@ -40,82 +40,24 @@ app.get('/', (req, res) =>
 
 
 //-----------------------------------------
-//Mongoose Settings
+// Mongoose Schema Initialization
 //-----------------------------------------
-// const {User} = require("./models");
-// const mongoose = require("mongoose");
-//
-// console.log("mongoose stuff intialized");
-//
-// app.use((req, res, next) => {
-//   console.log("use for mongoose callback");
-//   if (mongoose.connection.readyState) {
-//     console.log("if (mongoose.connection.readyState)");
-//     next();
-//   } else {
-//     console.log("else (mongoose.connection.readyState)");
-//     require("./mongo")().then(() => next());
-//     console.log("else (mongoose.connection.readyState)");
-//   }
-// });
-
-
-
-// connect Mongoose to your DB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/x-market-mvp');
-// console.log('mogodb_uri= '+process.env.MONGODB_URI)
-
-
-var db = mongoose.connection;
-db.on('error', console.error.bind(console, 'connection error:'));
-db.once('open', function() {
-      // we're connected!
-      console.log('We are connected!')
-
-      var kittySchema = new mongoose.Schema({
-          // name: String,
-          pair: String,
-          high: String,
-          low: String,
-          difference: Number
-
-      });
-      var Kitten = mongoose.model('Kitten', kittySchema);
-
-      var silence = new Kitten({
-          pair: 'platform_pair_1',
-          high: 'high_platform',
-          low: 'low_platform',
-          difference: 10
-
-      });
-      console.log(silence); // 'Silence'
-
-      // silence.save(function (err, silence) {
-      //     if (err) return console.error(err);
-      //     silence.name
-      // });
-
-      // Delete one entry.
-      // Kitten.findOneAndRemove({ name: 'Silence' }, function(err) {
-      //     if (!err) {
-      //         console.log('Deleted!');
-      //     }
-      //     else {
-      //         console.log('error');
-      //     }
-      // });
-
-      Kitten.find(function (err, kittens) {
-          if (err) return console.error(err);
-          console.log(kittens);
-      })
-
+var data_schema = new mongoose.Schema({
+    _time: Number,
+    _data:[{
+        pair: String,
+        high: String,
+        low: String,
+        difference: Number
+    }]
 });
+var Data = mongoose.model('Data', data_schema);
 
-console.log('\nSTART\n')
 
-// ----- ----- Tools ----- -----
+//-----------------------------------------
+// Tools
+//-----------------------------------------
+
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -139,17 +81,37 @@ function compare_ascending( a, b ) {
   }
   return 0;
 }
-// ----- ----- END Tools ----- -----
+
 
 
 var lakebtc_prices = {};
 
+// -----------------------------------------
+// Manage client connection/disconnection.
+// -----------------------------------------
 var active_users = 0;
 io.on('connection', function (socket) {
     active_users++;
     console.log('New client connected...')
     console.log('Active users: %d', active_users);
 
+    // Get data from database on new connection.
+    var db = mongoose.connection;
+    // 'useNewUrlParser' and 'useUnifiedTopology' parameters are required for not getting a warning from mongoose.
+    mongoose.set('useNewUrlParser', true);
+    mongoose.set('useUnifiedTopology', true);
+    mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/x-market-mvp')
+
+    db.on('error', console.error.bind(console, 'connection error:'));
+
+    db.once('open', function() {
+        // Get the latest entry.
+        Data.findOne().sort({_id: -1}).exec(function(err, res) {
+          io.emit('new_client_connected', { data: res._data });
+        });
+    });
+
+    // Close connection
     socket.on('disconnect', function (socket) {
         active_users--;
         console.log('Client disconnected...')
@@ -419,6 +381,24 @@ function fetch_prices() {
             common_pairs.sort(compare_descending);
             console.log("All APIs called.")
             io.emit('data_ascending', { data: common_pairs });
+
+            // Save to database.
+            var db = mongoose.connection;
+            mongoose.set('useNewUrlParser', true);
+            mongoose.set('useUnifiedTopology', true);
+            mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/x-market-mvp')
+
+            db.once('open', function() {
+                  var data_entry = new Data({
+                      _time: Date.now(),
+                      _data: common_pairs
+                  });
+                  // Save to database.
+                  data_entry.save(function (err, res) {
+                      if (err) return console.error(err);
+                  });
+            });
+
         }
         // Repeat the call.
         fetch_prices();
