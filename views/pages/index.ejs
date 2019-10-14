@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title> Crypto MVP </title>
+	<title> X-Market </title>
 
 	<!-- Including google font Josefin Sans -->
 	<link href="https://fonts.googleapis.com/css?family=Josefin+Sans|Josefin+Slab" rel="stylesheet">
@@ -11,6 +11,8 @@
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 	<!-- Including socket.io file v2.0.3 -->
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js"></script>
 
 	<!-- Custom CSS to make it look presentable -->
     <style>
@@ -53,19 +55,33 @@
 			outline: none;
 		}
 
+		/* .table-hover tbody tr:hover > td {
+		    cursor: pointer;
+		} */
+
 	</style>
 </head>
 <body>
-
+	<div class="container">
+		<div class="col-md-12">
+			<!-- <canvas id="myChart" width="400" height="200"></canvas> -->
+		</div>
+	</div>
 	<div class="container">
 		<div class="col-md-12">
 			<div>
-				<table class="table" id="my_table">
+				<table class="table table-hover" style="border-collapse:collapse;" id="my_table">
+					<thead></thead>
+					<tbody></tbody>
+					<!-- <thead>
 					<tr>
 						<td><h1 class="font">Platform</h1></td>
 						<td><h1 class="font">Pair</h1></td>
 						<td><h1 class="font">Difference</h1></td>
-					</tr>
+						<!-- <td><h1 class="font">Difference Graph (7d)</h1></td> -->
+						<!-- <td><canvas id="myChart" width="400" height="200"></canvas></td> -->
+					<!-- </tr>
+				</thead> -->
 				</table>
 			</div>
 		</div>
@@ -81,83 +97,237 @@
 		// const domain = 'https://x-market-mvp.herokuapp.com/';
 		//Connecting the socket to host and port
 		var socket = io.connect(ADDRESS);
-			socket.on('welcome', function (data) {
+		socket.on('data_propagation' , function(input){
+			$('#low_platform_0').val(input.data[0].platform_name);
+			$('#low_price_0').val(input.data[0].price);
+
+			$('#my_table thead').html(
+			  '<tr><td><h1 class="font">' + 'Platform' +
+			  '</h1></td><td><h1 class="font">' + 'Pair' +
+			  '</h1></td><td><h1 class="font">' + 'Difference' +
+			  // '</h1></td><td><h1 class="font">' + 'Difference Graph (7d)' +
+			  '</h1></td></tr>');
+
+			$('#my_table tbody').html('')
+			// for (var i=0; i<input.data.length; i++){
+			for (var i=0; i<3; i++){
+
+				$('#my_table tbody').append(
+					'<tr class="text-center" id="' + i + '">' +
+					'<td>' + input.data[i].high + '	--> ' + input.data[i].low +
+					'</td><td>' + input.data[i].pair +
+					'</td><td>' + input.data[i].difference + ' %' +
+					'</td></tr>' +
+					'<tr><td colspan="3"><p><canvas id="myChart' + i + '" width="400" height="200"></canvas> <p>' +
+					// '<tr><td colspan="3"><p><canvas id="myChart' + i + '" width="400" height="200"></canvas>  <span style="margin-left: 30%; font-size: 20px;"> Chart will be Rendered Here...</span> <p>' +
+					// '<tr><td colspan="3"><p><canvas id="myChart' + i + '" width="400" height="200"> <span><img src="img/loading.gif"></span> </canvas> </p>' +
+					'</td></tr>');
+
+			}
+
+
+			// Create clickable hidden rows.
+			$(function() {
+				$("tr").find("td[colspan=3]").hide();
+				$("table").click(function(event) {
+					event.stopPropagation();
+					var $target = $(event.target);
+					if ( $target.closest("td").attr("colspan") > 1 ) {
+						// Do nothing
+						// $target.slideUp();
+					} else {
+					}
+					$target.closest("tr").next().find("td[colspan=3]").slideToggle()
+
+				});
 			});
-		socket.on('binance_data' , function(input){
-	  	  console.log('data = ' + input.data);
-		  $('#high_platform').val(input.data[0].platform_name);
-		  // $('#hight_pair_name').val(input.data.symbol);
-		  $('#high_price').val(input.data[0].price);
-		  // $('#low_platform_name_1').val('Binance');
-		  // $('#low_price_1').val(input.data.price);
 
 
-		  // Fetch data on button click.
-		  // $('#aquote').click(function(){
-			//   // data = $('#qcontent').val()
-			//   // console.log(data);
-			//   console.log('Button clicked');
-			//   socket.emit('get_data');
-			//   socket.on('server_data' , function(input){
-			// 	  console.log('data = ' + input.data);
-			// 	  $('#qcontent').val(input.data);
-			//   })
+			// Send the data of the row to the server to construct the plot.
+			$('#my_table').find('tr').click( function(){
 
 
-			  //
-			  // // data = 'empty';
-			  // //Emitting the event and passing the quote to the server
-			  // socket.on('pull_data', function () {
-			  // 	socket.emit('server_data' , { quote: data })
-			  // 	console.log(data);
-			  // 	$('#qcontent').val(data)
-				// })
+				var index = $(this).index() / 2
 
-			  // $('#qcontent').val('nikos');
-		  })
-		  socket.on('new_client_connected' , function(input){
-			  // console.log('data = ' + input.data);
-			  $('#low_platform_0').val(input.data[0].platform_name);
-			  $('#low_price_0').val(input.data[0].price);
+				console.log('You clicked row '+ ($(this).index()+1) );
+				var request = {
+						'pair_request': input.data[index].pair,
+						'high_request': input.data[index].high,
+						'low_request': input.data[index].low
+					}
 
-			  $('#my_table tbody').html(
-				  '<tr><td><h1 class="font">' + 'Platform' +
-				  '</h1></td><td><h1 class="font">' + 'Pair' +
-				  '</h1></td><td><h1 class="font">' + 'Difference' +
-				  '</h1></td></tr>');
+				// Request the data for the plot of the clicked row.
+				socket.emit('plot_request', {data: request});
+
+				// Create the plot for the clicked row.
+				socket.on('plot' , function(input){
+					console.log(index)
+
+					// It will create the plot for the specific plot eg: 'myChart3'
+					var ctx = document.getElementById('myChart'+index).getContext('2d');
+
+					var myChart = new Chart(ctx, {
+						type: 'line',
+						data: {
+							labels: input.data.time,
+							datasets: [{
+								label: 'Difference: ',
+								// data: [5, 10, 7, 12, 3],
+								data: input.data.difference,
+								backgroundColor: [
+									'rgba(255, 159, 64, 0.2)'
+								],
+								borderColor: [
+									'rgba(255, 99, 132, 1)',
+								],
+								borderWidth: 1
+							}]
+						},
+						options: {
+							scales: {
+								yAxes: [{
+									ticks: {
+										beginAtZero: true
+									}
+								}]
+							}
+						},
+					});
+				})
+			});
 
 
-			  for (var i=0; i<input.data.length; i++){
+
+			// var ctx = document.getElementById('myChart').getContext('2d');
+			//
+			// var myChart = new Chart(ctx, {
+			// 	// type: 'bar',
+			// 	type: 'line',
+			// 	data: {
+			// 		// labels: input.data.time,
+			// 		datasets: [{
+			// 			label: 'Difference: ',
+			// 			data: [5, 10, 7, 12, 3],
+			// 			// data: input.data.difference,
+			// 			backgroundColor: [
+			// 				'rgba(255, 159, 64, 0.2)'
+			// 			],
+			// 			borderColor: [
+			// 				'rgba(255, 99, 132, 1)',
+			// 			],
+			// 			borderWidth: 1
+			// 		}]
+			// 	},
+			// 	options: {
+			// 		scales: {
+			// 			yAxes: [{
+			// 				ticks: {
+			// 					beginAtZero: true
+			// 				}
+			// 			}]
+			// 		}
+			// 	}
+			// });
+
+		})
+
+		socket.on('data_ascending' , function(input){
+			$('#low_platform_0').val(input.data[0].platform_name);
+			$('#low_price_0').val(input.data[0].price);
+
+			$('#my_table tbody').html(
+			  '<tr><td><h1 class="font">' + 'Platform' +
+			  '</h1></td><td><h1 class="font">' + 'Pair' +
+			  '</h1></td><td><h1 class="font">' + 'Difference' +
+			  '</h1></td></tr>');
+
+			for (var i=0; i<input.data.length; i++){
 				$('#my_table').append(
 					'<tr class="text-center"><td>' + input.data[i].high + '	--> ' + input.data[i].low +
 					'</td><td>' + input.data[i].pair +
 					'</td><td>' + input.data[i].difference + ' %' +
 					'</td></tr>');
-			  }
-		  })
-
-		  socket.on('data_ascending' , function(input){
-			  // console.log('data = ' + input.data);
-			  $('#low_platform_0').val(input.data[0].platform_name);
-			  $('#low_price_0').val(input.data[0].price);
-
-			  $('#my_table tbody').html(
-				  '<tr><td><h1 class="font">' + 'Platform' +
-				  '</h1></td><td><h1 class="font">' + 'Pair' +
-				  '</h1></td><td><h1 class="font">' + 'Difference' +
-				  '</h1></td></tr>');
-
-
-			  for (var i=0; i<input.data.length; i++){
-			    $('#my_table').append(
-					'<tr class="text-center"><td>' + input.data[i].high + '	--> ' + input.data[i].low +
-					'</td><td>' + input.data[i].pair +
-					'</td><td>' + input.data[i].difference + ' %' +
-					'</td></tr>');
-			  }
-		  })
+			}
 		})
-		//jquery code ends
+
+
+	})
+
+
+
+			// var timeFormat = 'MM/DD/YYYY HH:mm';
+			//
+			// function newDate(days) {
+			// 	return moment().add(days, 'd').toDate();
+			// }
+			//
+			// function newDateString(days) {
+			// 	return moment().add(days, 'd').format(timeFormat);
+			// }
+			//
+			// var color = Chart.helpers.color;
+			// var config = {
+			// 	type: 'line',
+			// 	data: {
+			// 		labels: [ // Date Objects
+			// 			newDate(0),
+			// 			newDate(1),
+			// 			newDate(2),
+			// 			newDate(3),
+			// 			newDate(4),
+			// 			newDate(5),
+			// 			newDate(6)
+			// 		],
+			// 		datasets: [{
+			// 			label: 'My First dataset',
+			// 			// backgroundColor: color(window.chartColors.red).alpha(0.5).rgbString(),
+			// 			// borderColor: window.chartColors.red,
+			// 			fill: false,
+			// 			data: [
+			// 				randomScalingFactor(),
+			// 				randomScalingFactor(),
+			// 				randomScalingFactor(),
+			// 				randomScalingFactor(),
+			// 				randomScalingFactor(),
+			// 				randomScalingFactor(),
+			// 				randomScalingFactor()
+			// 			],
+			//
+			// 		}]
+			// 	},
+			// 	options: {
+			// 		title: {
+			// 			text: 'Chart.js Time Scale'
+			// 		},
+			// 		scales: {
+			// 			xAxes: [{
+			// 				type: 'time',
+			// 				time: {
+			// 					parser: timeFormat,
+			// 					// round: 'day'
+			// 					tooltipFormat: 'll HH:mm'
+			// 				},
+			// 				scaleLabel: {
+			// 					display: true,
+			// 					labelString: 'Date'
+			// 				}
+			// 			}],
+			// 			yAxes: [{
+			// 				scaleLabel: {
+			// 					display: true,
+			// 					labelString: 'value'
+			// 				}
+			// 			}]
+			// 		},
+			// 	}
+			// };
+
+			// window.onload = function() {
+			// 	var ctx = document.getElementById('myChart').getContext('2d');
+			// 	window.myLine = new Chart(ctx, config);
+			// };
+
+
 	</script>
 
 </body>

@@ -34,7 +34,8 @@ if (PORT == '3000'|| PORT == '5000') {
 app.get('/', (req, res) =>
     res.render('pages/index', {address:address})
 )
-
+// Use this to provide access to 'public' folder from html.
+app.use(express.static(__dirname + '/public'))
 
 
 
@@ -104,12 +105,109 @@ io.on('connection', function (socket) {
 
     db.on('error', console.error.bind(console, 'connection error:'));
 
+    // Send latest data to new connected client.
     db.once('open', function() {
         // Get the latest entry.
         Data.findOne().sort({_id: -1}).exec(function(err, res) {
-          io.emit('new_client_connected', { data: res._data });
+            io.emit('data_propagation', { data: res._data });
         });
-    });
+
+        socket.on('plot_request', function (input) {
+
+            async function async_fetch(input) {
+                console.log('row clicked')
+                console.log(input)
+                //     var pair_requested = 'xrpbtc'
+                //     var high_requested = 'Binance'
+                //     var low_requested = 'Lakebtc'
+
+                var pair_requested = input.data.pair_request
+                var high_requested = input.data.high_request
+                var low_requested = input.data.low_request
+                var plot_data = {
+                    time: [],
+                    difference: []
+                }
+
+                // Calculate the time (in msecs) 1 week ago.
+                var week_period = Date.now() - 604800000
+                var res = await Data.find({_time: {$gt:week_period}})
+
+                // console.log(input.data.pair_request)
+                // console.log(high_requested)
+                // console.log(low_requested)
+
+                for (pack of res) {
+                    // Search all pairs.
+                    for (pair of pack._data) {
+                        // console.log(pair.pair)
+                        if ((pair.pair == pair_requested) && (pair.high == high_requested) &&
+                            (pair.low == low_requested)) {
+                            // console.log('found')
+
+                            break
+                        }
+                    }
+                    // console.losg(pair)
+
+                    // ******* CONVERT TO TIME NOW ******t
+                    // console.log(typeof(pack._time))
+                    var date = new Date(pack._time);
+                    var year = date.getFullYear()
+                    var month = date.getMonth()
+                    var day = date.getDate()
+                    var hours = date.getHours()
+                    var minutes = date.getMinutes()
+                    var date_formated = day + '/' + month + '/' + year + ' ' + hours + ':' + minutes
+
+                    plot_data.time.push(date_formated)
+                    plot_data.difference.push(pair.difference)
+                }
+
+                function makeArr(startValue, stopValue, cardinality) {
+                    // Returns an array of numbers based on start, stop and desired number of return values
+                    var arr = [];
+                    var step = (stopValue - startValue) / (cardinality - 1);
+                    for (var i = 0; i < cardinality; i++) {
+                        arr.push(Math.round(startValue + (step * i)));
+                    }
+                    return arr;
+                }
+                
+                // Set the number of points to plot in the last week
+                const num_of_points = 20
+                var total_points = plot_data.time.length
+                const step = total_points/ num_of_points
+                // console.log(step)
+                // console.log(plot_data.time.length)
+
+                // Calculate the indices of the selected data to plot.
+                // We don't want to plot all the points of the last week, instead we want to plot only 20, equally
+                // distanced, points.
+                var indices = makeArr(startValue=0, stopValue=total_points - 1, cardinality=num_of_points)
+
+                var temp_time = []
+                var temp_difference = []
+                // Gather the 20 points that are equally distanced from each other in the last week of data points.
+                for (index of indices) {
+                    temp_time.push(plot_data.time[index])
+                    temp_difference.push(plot_data.difference[index])
+                }
+
+                plot_data.time = temp_time
+                plot_data.difference = temp_difference
+
+                // console.log(plot_data.time)
+
+                io.emit('plot', { data: plot_data });
+            }
+            async_fetch(input)
+                // .then(console.log)
+                .catch(console.error)
+        })
+    })
+
+
 
     // Close connection
     socket.on('disconnect', function (socket) {
@@ -118,6 +216,7 @@ io.on('connection', function (socket) {
         console.log('Active users: %d', active_users);
     });
 });
+
 
 
 const binance_api = require('node-binance-api')().options({
@@ -380,14 +479,15 @@ function fetch_prices() {
             common_pairs = [].concat(...common_pairs);
             common_pairs.sort(compare_descending);
             console.log("All APIs called.")
-            io.emit('data_ascending', { data: common_pairs });
+            // io.emit('data_ascending', { data: common_pairs });
+            io.emit('data_propagation', { data: common_pairs });
 
             // Save to database.
             var db = mongoose.connection;
             mongoose.set('useNewUrlParser', true);
             mongoose.set('useUnifiedTopology', true);
             mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/x-market-mvp')
-
+            // Create the structure of the data to save.
             db.once('open', function() {
                   var data_entry = new Data({
                       _time: Date.now(),

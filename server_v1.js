@@ -1,4 +1,4 @@
-// Fetch prices of BTC-USD from 8 platforms and sort them.
+    // Fetch prices of BTC-USD from 8 platforms and sort them.
 
 var path = require('path');
 var request = require("request");

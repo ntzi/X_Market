@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "bittrex-api-node": "^0.0.6",
+    "chart.js": "^2.8.0",
     "coinbase-pro": "^0.9.0",
     "coinbase-pro-api": "^1.0.2",
     "coingecko-api": "^1.0.5",
