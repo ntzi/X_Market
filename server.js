@@ -55,6 +55,17 @@ var data_schema = new mongoose.Schema({
 var Data = mongoose.model('Data', data_schema);
 
 
+// Remodel the database shape.
+var data_schema_new = new mongoose.Schema({
+    pair: String,
+    platform_1: String,
+    platform_2: String,
+    _data:[{
+        _time: Number,
+        difference: Number
+    }]
+});
+
 //-----------------------------------------
 // Tools
 //-----------------------------------------
@@ -87,6 +98,157 @@ function compare_ascending( a, b ) {
 
 var lakebtc_prices = {};
 
+
+
+
+
+
+
+
+
+// -----------------------------------------
+// TEST Fetching from database.
+// -----------------------------------------
+
+const get_data = () => {
+    // Get data from database on new connection.
+    var db = mongoose.connection;
+    // 'useNewUrlParser' and 'useUnifiedTopology' parameters are required for not getting a warning from mongoose.
+    mongoose.set('useNewUrlParser', true);
+    mongoose.set('useUnifiedTopology', true);
+    mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/x-market-mvp')
+
+    db.on('error', console.error.bind(console, 'connection error:'));
+
+    // Send latest data to new connected client.
+    db.once('open', function() {
+        // Get the latest entry.
+        Data.findOne().sort({_id: -1}).exec(function(err, res) {
+            io.emit('data_propagation', { data: res._data });
+            console.log(res)
+        });
+
+        // var week_period = Date.now() - 604800000
+        // var res = await Data.find({_time: {$gt:week_period}})
+
+        Data.find().sort({_time: -1}).limit(5).exec(function(err, res) {
+            // io.emit('data_propagation', { data: res._data });
+            // console.log(res)
+        });
+
+        // socket.on('plot_request', function (input) {
+
+            // async function async_fetch(input) {
+            async function async_fetch() {
+                // console.log(input)
+                    var pair_requested = 'xrpbtc'
+                    var high_requested = 'Binance'
+                    var low_requested = 'Lakebtc'
+
+                // var pair_requested = input.data.pair_request
+                // var high_requested = input.data.high_request
+                // var low_requested = input.data.low_request
+                var plot_data = {
+                    time: [],
+                    difference: []
+                }
+
+                // Calculate the time (in msecs) 1 week ago.
+                var week_period = Date.now() - 604800000
+                var res = await Data.find({_time: {$gt:week_period}})
+
+                // console.log(input.data.pair_request)
+                // console.log(high_requested)
+                // console.log(low_requested)
+
+                // Search all timestamps.
+                for (pack of res) {
+                    // Search all pairs.
+                    for (pair of pack._data) {
+                        // console.log(pair.pair)
+                        if ((pair.pair == pair_requested) && (pair.high == high_requested) &&
+                            (pair.low == low_requested)) {
+                            // console.log('found')
+
+                            break
+                        }
+                    }
+                    // console.losg(pair)
+
+                    // ******* CONVERT TO TIME NOW ******
+                    // console.log(typeof(pack._time))
+                    var date = new Date(pack._time);
+                    var year = date.getFullYear()
+                    var month = date.getMonth()
+                    var day = date.getDate()
+                    var hours = date.getHours()
+                    var minutes = date.getMinutes()
+                    var date_formated = day + '/' + month + '/' + year + ' ' + hours + ':' + minutes
+
+                    plot_data.time.push(date_formated)
+                    plot_data.difference.push(pair.difference)
+                }
+
+                function makeArr(startValue, stopValue, cardinality) {
+                    // Returns an array of numbers based on start, stop and desired number of return values
+                    var arr = [];
+                    var step = (stopValue - startValue) / (cardinality - 1);
+                    for (var i = 0; i < cardinality; i++) {
+                        arr.push(Math.round(startValue + (step * i)));
+                    }
+                    return arr;
+                }
+
+                // Set the number of points to plot in the last week
+                const num_of_points = 20
+                var total_points = plot_data.time.length
+                // const step = total_points/ num_of_points
+                // console.log(step)
+                // console.log(plot_data.time.length)
+
+                // Calculate the indices of the selected data to plot.
+                // We don't want to plot all the points of the last week, instead we want to plot only 20, equally
+                // distanced, points.
+                var indices = makeArr(startValue=0, stopValue=total_points - 1, cardinality=num_of_points)
+                // console.log(indices)
+
+                var temp_time = []
+                var temp_difference = []
+                // Gather the 20 points that are equally distanced from each other in the last week of data points.
+                for (index of indices) {
+                    temp_time.push(plot_data.time[index])
+                    temp_difference.push(plot_data.difference[index])
+                }
+
+                // console.log(plot_data.time)
+
+                plot_data.time = temp_time
+                plot_data.difference = temp_difference
+
+                // console.log(plot_data.time)
+
+                io.emit('plot', { data: plot_data });
+            }
+            // async_fetch(input)
+            async_fetch()
+                // .then(console.log)
+                .catch(console.error)
+        // })
+    })
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 // -----------------------------------------
 // Manage client connection/disconnection.
 // -----------------------------------------
@@ -116,7 +278,7 @@ io.on('connection', function (socket) {
 
             async function async_fetch(input) {
                 console.log('row clicked')
-                console.log(input)
+                // console.log(input)
                 //     var pair_requested = 'xrpbtc'
                 //     var high_requested = 'Binance'
                 //     var low_requested = 'Lakebtc'
@@ -137,6 +299,7 @@ io.on('connection', function (socket) {
                 // console.log(high_requested)
                 // console.log(low_requested)
 
+                // Search all timestamps.
                 for (pack of res) {
                     // Search all pairs.
                     for (pair of pack._data) {
@@ -173,11 +336,11 @@ io.on('connection', function (socket) {
                     }
                     return arr;
                 }
-                
+
                 // Set the number of points to plot in the last week
                 const num_of_points = 20
                 var total_points = plot_data.time.length
-                const step = total_points/ num_of_points
+                // const step = total_points/ num_of_points
                 // console.log(step)
                 // console.log(plot_data.time.length)
 
@@ -185,6 +348,7 @@ io.on('connection', function (socket) {
                 // We don't want to plot all the points of the last week, instead we want to plot only 20, equally
                 // distanced, points.
                 var indices = makeArr(startValue=0, stopValue=total_points - 1, cardinality=num_of_points)
+                // console.log(indices)
 
                 var temp_time = []
                 var temp_difference = []
@@ -193,6 +357,8 @@ io.on('connection', function (socket) {
                     temp_time.push(plot_data.time[index])
                     temp_difference.push(plot_data.difference[index])
                 }
+
+                // console.log(plot_data.time)
 
                 plot_data.time = temp_time
                 plot_data.difference = temp_difference
@@ -506,12 +672,15 @@ function fetch_prices() {
 };
 
 const main = async () => {
+    get_data()
+
     // coinbase()
     // coinbase_pairs = await init()
     // coinbase_ws(coinbase_pairs)
     // console.log(coinbase_pairs)
     // await sleep(1000)
-    fetch_prices()
+
+    // fetch_prices()
 }
 
 main()

@@ -14,6 +14,11 @@
 
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js"></script>
 
+	<script src="https://cdn.zinggrid.com/zinggrid.min.js"></script>
+  	<script src="https://cdn.zingchart.com/zingchart.min.js"></script>
+    <script>ZC.LICENSE = ['09c5964a057c3124ffaa293847e9aef4','d41d8cd98f00b204e9800998ecf8427e', 'faa38520146223e92b6b0d2fc89c0dc6'];</script>
+
+
 	<!-- Custom CSS to make it look presentable -->
     <style>
 		.font{
@@ -55,9 +60,25 @@
 			outline: none;
 		}
 
-		/* .table-hover tbody tr:hover > td {
-		    cursor: pointer;
-		} */
+
+
+		.component--container {
+		  display: flex;
+		}
+
+		zing-grid {
+		  --zg-pager-font-size:20px;
+		  font-size: 20px;
+		  --zg-head-cell-font-size: 30px;
+		  --theme-font-family: 'Josefin Slab', serif;
+		}
+
+		.zc-license {
+		  display:none;
+		}
+
+
+
 
 	</style>
 </head>
@@ -70,7 +91,8 @@
 	<div class="container">
 		<div class="col-md-12">
 			<div>
-				<table class="table table-hover" style="border-collapse:collapse;" id="my_table">
+				<!-- Open this for old table -->
+				<!-- <table class="table table-hover" style="border-collapse:collapse;" id="my_table"> -->
 					<thead></thead>
 					<tbody></tbody>
 					<!-- <thead>
@@ -87,245 +109,123 @@
 		</div>
 	</div>
 
+
+	<div class="container">
+		<div class="col-md-12">
+			<div class="component--container">
+		      <zing-grid
+			  	theme="ios"
+				height="500"
+				pager
+				page-size="20"
+				page-size-options="10,20,50"
+			    layout="row"
+			    layout-controls="disabled"
+			    viewport-stop
+				sort
+				search>
+
+		        <zg-colgroup>
+					<zg-column index="high" header="Buy from" width="15%"></zg-column>
+					<zg-column index="low" header="Sell to" width="15%"></zg-column>
+					<zg-column index="pair" header="Pair" width="15%"></zg-column>
+					<zg-column index="difference" header="Difference" width="15%"></zg-column>
+
+		          <zg-column index="CloseTrends" header="Last 7 days" sort=false renderer="_renderLineChart">
+		            <div class="line-chart--spark"></div>
+		  			</zg-column>
+		        </zg-colgroup>
+		      </zing-grid>
+		      <div id="myChart"></div>
+		    </div>
+		</div>
+	</div>
+
+
 	<script>
 
-	//Jquery code starts
-	$('document').ready(function(){
+
+
+	const ZingChartConfig = function(type, series) {
+	  return {
+	    type,
+	    theme: 'spark',
+	    tooltip: {
+	      visible: type != 'pie' ? false : true,
+	    },
+	    crosshairX:{
+
+	    },
+	    series,
+	  };
+	};
+
+	function _renderLineChart(ctv, cellRef, $cell) {
+	  let zcRef = cellRef.querySelector('.line-chart--spark');
+	  let id = `line-chart-${Math.floor(Math.random() * 99999)}`;
+	  zcRef.setAttribute('id', id);
+	  let mapValues = ctv.map(function(trend) {
+	    return trend.Close;
+	  });
+	  // render line chart
+	  zingchart.render({
+	    id,
+	    data: ZingChartConfig(
+	      'line',
+	      [{
+	        values:mapValues
+	      }]
+	    ),
+	    height: 100,
+	    width: 150,
+	  });
+	}
+
+
+	window.addEventListener('load', () => {
 		const ADDRESS = "<%= address %>";
-		// const domain = "http://127.0.0.1:"+PORT;
-		// const domain = 'http://localhost:'+PORT;
-		// const domain = 'https://x-market-mvp.herokuapp.com/';
-		//Connecting the socket to host and port
 		var socket = io.connect(ADDRESS);
+
 		socket.on('data_propagation' , function(input){
-			$('#low_platform_0').val(input.data[0].platform_name);
-			$('#low_price_0').val(input.data[0].price);
+			let zgRef = document.querySelector('zing-grid');
+			const data = input.data
+			console.log(data)
 
-			$('#my_table thead').html(
-			  '<tr><td><h1 class="font">' + 'Platform' +
-			  '</h1></td><td><h1 class="font">' + 'Pair' +
-			  '</h1></td><td><h1 class="font">' + 'Difference' +
-			  // '</h1></td><td><h1 class="font">' + 'Difference Graph (7d)' +
-			  '</h1></td></tr>');
-
-			$('#my_table tbody').html('')
-			// for (var i=0; i<input.data.length; i++){
-			for (var i=0; i<3; i++){
-
-				$('#my_table tbody').append(
-					'<tr class="text-center" id="' + i + '">' +
-					'<td>' + input.data[i].high + '	--> ' + input.data[i].low +
-					'</td><td>' + input.data[i].pair +
-					'</td><td>' + input.data[i].difference + ' %' +
-					'</td></tr>' +
-					'<tr><td colspan="3"><p><canvas id="myChart' + i + '" width="400" height="200"></canvas> <p>' +
-					// '<tr><td colspan="3"><p><canvas id="myChart' + i + '" width="400" height="200"></canvas>  <span style="margin-left: 30%; font-size: 20px;"> Chart will be Rendered Here...</span> <p>' +
-					// '<tr><td colspan="3"><p><canvas id="myChart' + i + '" width="400" height="200"> <span><img src="img/loading.gif"></span> </canvas> </p>' +
-					'</td></tr>');
-
+			for (i in data) {
+				data[i].CloseTrends =
+				[
+			      {
+			        "Date": "3/4/2017",
+			        "Close": 138.96
+			      },
+			      {
+			        "Date": "10/2/2016",
+			        "Close": 113
+			      },
+			      {
+			        "Date": "5/2/2016",
+			        "Close": 93.42
+			      },
+			      {
+			        "Date": "12/5/2015",
+			        "Close": 113.18
+			      },
+			      {
+			        "Date": "7/1/2015",
+			        "Close": 132.07
+			      }
+			    ]
 			}
 
-
-			// Create clickable hidden rows.
-			$(function() {
-				$("tr").find("td[colspan=3]").hide();
-				$("table").click(function(event) {
-					event.stopPropagation();
-					var $target = $(event.target);
-					if ( $target.closest("td").attr("colspan") > 1 ) {
-						// Do nothing
-						// $target.slideUp();
-					} else {
-					}
-					$target.closest("tr").next().find("td[colspan=3]").slideToggle()
-
-				});
-			});
-
-
-			// Send the data of the row to the server to construct the plot.
-			$('#my_table').find('tr').click( function(){
-
-
-				var index = $(this).index() / 2
-
-				console.log('You clicked row '+ ($(this).index()+1) );
-				var request = {
-						'pair_request': input.data[index].pair,
-						'high_request': input.data[index].high,
-						'low_request': input.data[index].low
-					}
-
-				// Request the data for the plot of the clicked row.
-				socket.emit('plot_request', {data: request});
-
-				// Create the plot for the clicked row.
-				socket.on('plot' , function(input){
-					console.log(index)
-
-					// It will create the plot for the specific plot eg: 'myChart3'
-					var ctx = document.getElementById('myChart'+index).getContext('2d');
-
-					var myChart = new Chart(ctx, {
-						type: 'line',
-						data: {
-							labels: input.data.time,
-							datasets: [{
-								label: 'Difference: ',
-								// data: [5, 10, 7, 12, 3],
-								data: input.data.difference,
-								backgroundColor: [
-									'rgba(255, 159, 64, 0.2)'
-								],
-								borderColor: [
-									'rgba(255, 99, 132, 1)',
-								],
-								borderWidth: 1
-							}]
-						},
-						options: {
-							scales: {
-								yAxes: [{
-									ticks: {
-										beginAtZero: true
-									}
-								}]
-							}
-						},
-					});
-				})
-			});
-
-
-
-			// var ctx = document.getElementById('myChart').getContext('2d');
-			//
-			// var myChart = new Chart(ctx, {
-			// 	// type: 'bar',
-			// 	type: 'line',
-			// 	data: {
-			// 		// labels: input.data.time,
-			// 		datasets: [{
-			// 			label: 'Difference: ',
-			// 			data: [5, 10, 7, 12, 3],
-			// 			// data: input.data.difference,
-			// 			backgroundColor: [
-			// 				'rgba(255, 159, 64, 0.2)'
-			// 			],
-			// 			borderColor: [
-			// 				'rgba(255, 99, 132, 1)',
-			// 			],
-			// 			borderWidth: 1
-			// 		}]
-			// 	},
-			// 	options: {
-			// 		scales: {
-			// 			yAxes: [{
-			// 				ticks: {
-			// 					beginAtZero: true
-			// 				}
-			// 			}]
-			// 		}
-			// 	}
-			// });
+			zgRef.setData(data);
 
 		})
-
-		socket.on('data_ascending' , function(input){
-			$('#low_platform_0').val(input.data[0].platform_name);
-			$('#low_price_0').val(input.data[0].price);
-
-			$('#my_table tbody').html(
-			  '<tr><td><h1 class="font">' + 'Platform' +
-			  '</h1></td><td><h1 class="font">' + 'Pair' +
-			  '</h1></td><td><h1 class="font">' + 'Difference' +
-			  '</h1></td></tr>');
-
-			for (var i=0; i<input.data.length; i++){
-				$('#my_table').append(
-					'<tr class="text-center"><td>' + input.data[i].high + '	--> ' + input.data[i].low +
-					'</td><td>' + input.data[i].pair +
-					'</td><td>' + input.data[i].difference + ' %' +
-					'</td></tr>');
-			}
-		})
-
-
-	})
+	});
 
 
 
-			// var timeFormat = 'MM/DD/YYYY HH:mm';
-			//
-			// function newDate(days) {
-			// 	return moment().add(days, 'd').toDate();
-			// }
-			//
-			// function newDateString(days) {
-			// 	return moment().add(days, 'd').format(timeFormat);
-			// }
-			//
-			// var color = Chart.helpers.color;
-			// var config = {
-			// 	type: 'line',
-			// 	data: {
-			// 		labels: [ // Date Objects
-			// 			newDate(0),
-			// 			newDate(1),
-			// 			newDate(2),
-			// 			newDate(3),
-			// 			newDate(4),
-			// 			newDate(5),
-			// 			newDate(6)
-			// 		],
-			// 		datasets: [{
-			// 			label: 'My First dataset',
-			// 			// backgroundColor: color(window.chartColors.red).alpha(0.5).rgbString(),
-			// 			// borderColor: window.chartColors.red,
-			// 			fill: false,
-			// 			data: [
-			// 				randomScalingFactor(),
-			// 				randomScalingFactor(),
-			// 				randomScalingFactor(),
-			// 				randomScalingFactor(),
-			// 				randomScalingFactor(),
-			// 				randomScalingFactor(),
-			// 				randomScalingFactor()
-			// 			],
-			//
-			// 		}]
-			// 	},
-			// 	options: {
-			// 		title: {
-			// 			text: 'Chart.js Time Scale'
-			// 		},
-			// 		scales: {
-			// 			xAxes: [{
-			// 				type: 'time',
-			// 				time: {
-			// 					parser: timeFormat,
-			// 					// round: 'day'
-			// 					tooltipFormat: 'll HH:mm'
-			// 				},
-			// 				scaleLabel: {
-			// 					display: true,
-			// 					labelString: 'Date'
-			// 				}
-			// 			}],
-			// 			yAxes: [{
-			// 				scaleLabel: {
-			// 					display: true,
-			// 					labelString: 'value'
-			// 				}
-			// 			}]
-			// 		},
-			// 	}
-			// };
 
-			// window.onload = function() {
-			// 	var ctx = document.getElementById('myChart').getContext('2d');
-			// 	window.myLine = new Chart(ctx, config);
-			// };
+
 
 
 	</script>
