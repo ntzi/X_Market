@@ -60,11 +60,13 @@ var data_schema_new = new mongoose.Schema({
     pair: String,
     platform_1: String,
     platform_2: String,
-    _data:[{
-        _time: Number,
+    data:[{
+        time: Number,
         difference: Number
     }]
 });
+
+var Data_new = mongoose.model('Data', data_schema);
 
 //-----------------------------------------
 // Tools
@@ -105,27 +107,148 @@ var lakebtc_prices = {};
 
 
 
-
 // -----------------------------------------
 // TEST Fetching from database.
 // -----------------------------------------
 
 const get_data = () => {
-    // Get data from database on new connection.
-    var db = mongoose.connection;
-    // 'useNewUrlParser' and 'useUnifiedTopology' parameters are required for not getting a warning from mongoose.
-    mongoose.set('useNewUrlParser', true);
-    mongoose.set('useUnifiedTopology', true);
-    mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/x-market-mvp')
+//     // Get the structure of the schema from coin.js
+//     var Coin = require('./coin');
+//
+//     var db = mongoose.connection;
+//     mongoose.set('useNewUrlParser', true);
+//     mongoose.set('useUnifiedTopology', true);
+//     mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/x-market-mvp', async (err) => {
+//         if (err) throw err;
+//         console.log('Connected to database.');
+//
+//         async function async_fetch() {
+//             var plot_data = {
+//                 time: [],
+//                 difference: []
+//             }
+//
+//             // Calculate the time (in msecs) 1 week ago.
+//             var week_period = Date.now() - 604800000
+//             // var week_period = 1572259751265
+//             var res = await Coin.find().limit(5).exec(function(err, res) {
+//             // var res = await Coin.find({_time: {$gt:week_period}}).sort({_time: -1}).limit(5).exec(function(err, res) {
+//                 data = []
+//                 for (pair of res) {
+//                     // console.log(pair)
+//
+//                     // Check wheter the most recent record of difference in this pair of coins is possitive or negative
+//                     // and determine from which platform should buy and where to sell.
+//                     if (pair.difference[pair.difference.length - 1] >= 0) {
+//                         var high = pair.platform_name_1
+//                         var low = pair.platform_name_2
+//                     } else {
+//                         var high = pair.platform_name_2
+//                         var low = pair.platform_name_1
+//                     }
+//
+//                     // Create the dataset for the plot.
+//                     let time_values = []
+//                     let difference_values = []
+//                     var length = pair.time.length
+//                     for (let i=length-1; i>=0 ; i--) {
+//                         // console.log(pair.time[i])
+//                         // Keep only the values of the last week.
+//                         if (pair.time[i] < week_period) {
+//                             break
+//                         }
+//
+//                         time_values.push(pair.time[i])
+//                         difference_values.push(pair.difference[i])
+//                     }
+//
+//                     function makeArr(startValue, stopValue, cardinality) {
+//                         // Returns an array of numbers based on start, stop and desired number of return values
+//                         var arr = [];
+//                         var step = (stopValue - startValue) / (cardinality - 1);
+//                         for (var i = 0; i < cardinality; i++) {
+//                             arr.push(Math.round(startValue + (step * i)));
+//                         }
+//                         return arr;
+//                     }
+//
+//                     // Set the number of points to plot in the last week
+//                     const num_of_points = 3 //20
+//                     var total_points = time_values.length
+//
+//                     // Calculate the indices of the selected data to plot.
+//                     // We don't want to plot all the points of the last week, instead we want to plot only 20, equally
+//                     // distanced, points.
+//                     var indices = makeArr(startValue=0, stopValue=total_points - 1, cardinality=num_of_points)
+//
+//                     let time = []
+//                     let difference = []
+//                     // Gather the 20 points that are equally distanced from each other in the last week of data points.
+//                     for (index of indices) {
+//                         time.push(time_values[index])
+//                         difference.push(difference_values[index])
+//                     }
+//
+//                     // Convert time format from msec to DD/MM/YY HH:MM
+//                     for (let i=0; i<time.length; i++){
+//                         var date = new Date(time_values[i]);
+//                         var year = date.getFullYear()
+//                         var month = date.getMonth()
+//                         var day = date.getDate()
+//                         var hours = date.getHours()
+//                         var minutes = date.getMinutes()
+//                         var date_formated = day + '/' + month + '/' + year + ' ' + hours + ':' + minutes
+//
+//                         time[i] = date_formated
+//                     }
+//
+//                     let plot = []
+//                     for (let i=0; i<time.length; i++){
+//                         plot.push(
+//                             {
+//                                 "Date": time[i],
+//                                 "Difference": difference[i]
+//                             }
+//                         )
+//                     }
+//
+//                     data.push({
+//                         pair: pair.pair,
+//                         high: high,
+//                         low: low,
+//                         difference: Math.abs(pair.difference[pair.difference.length - 1]),
+//                         plot: plot
+//                     })
+//                 }
+//
+//                 // console.log(data)
+//                 // console.log()
+//                 // console.log(data[0].plot)
+//
+//                 io.emit('data_propagation_2', { data: data });
+//                 // console.log(res)
+//                 // console.log()
+//                 // console.log(res[0].time)
+//             });
+//         }
+//         async_fetch()
+//             // .then()
+//             .catch(console.error)
+//
+//     })
 
-    db.on('error', console.error.bind(console, 'connection error:'));
+
+
+
+
+
 
     // Send latest data to new connected client.
     db.once('open', function() {
         // Get the latest entry.
         Data.findOne().sort({_id: -1}).exec(function(err, res) {
             io.emit('data_propagation', { data: res._data });
-            console.log(res)
+            // console.log(res._data)
         });
 
         // var week_period = Date.now() - 604800000
@@ -594,7 +717,7 @@ function fetch_prices() {
             function get_common_pairs(platform_data_1, platform_data_2, platform_name_1, platform_2){
                 // Get common pairs between two excange platforms.
 
-                var common_pairs_binance_lakebtc = []
+                var common_pairs = []
                 // Go through all pairs in each platform.
                 Object.keys(platform_data_1).forEach(function (platform_pair_1) {
                     Object.keys(platform_data_2).forEach(function (platform_pair_2) {
@@ -605,7 +728,7 @@ function fetch_prices() {
                             if (a > b) {
                                 let high_platform = platform_name_1;
                                 let low_platform = platform_name_2;
-                                common_pairs_binance_lakebtc.push(
+                                common_pairs.push(
                                     {
                                         pair: platform_pair_1,
                                         high: high_platform,
@@ -616,7 +739,7 @@ function fetch_prices() {
                             } else {
                                 let high_platform = platform_name_2;
                                 let low_platform = platform_name_1;
-                                common_pairs_binance_lakebtc.push(
+                                common_pairs.push(
                                     {
                                         pair: platform_pair_1,
                                         high: high_platform,
@@ -628,7 +751,7 @@ function fetch_prices() {
                         }
                     });
                 });
-                return common_pairs_binance_lakebtc
+                return common_pairs
             }
 
             var common_pairs = []
@@ -647,6 +770,9 @@ function fetch_prices() {
             console.log("All APIs called.")
             // io.emit('data_ascending', { data: common_pairs });
             io.emit('data_propagation', { data: common_pairs });
+
+            // save_data(common_pairs)
+            console.log(common_pairs)
 
             // Save to database.
             var db = mongoose.connection;
@@ -672,7 +798,17 @@ function fetch_prices() {
 };
 
 const main = async () => {
-    get_data()
+    // get_data()
+
+    // var database = require('./db')
+    // database.get_data('hey')
+
+    // database(function (err, conn) {
+    //     if (err) throw err
+    //   })
+
+
+    // database.save_data()
 
     // coinbase()
     // coinbase_pairs = await init()
@@ -680,7 +816,7 @@ const main = async () => {
     // console.log(coinbase_pairs)
     // await sleep(1000)
 
-    // fetch_prices()
+    await fetch_prices()
 }
 
 main()

@@ -131,7 +131,7 @@
 					<zg-column index="pair" header="Pair" width="15%"></zg-column>
 					<zg-column index="difference" header="Difference" width="15%"></zg-column>
 
-		          <zg-column index="CloseTrends" header="Last 7 days" sort=false renderer="_renderLineChart">
+		          <zg-column index="plot" header="Last 7 days" sort=false renderer="_renderLineChart">
 		            <div class="line-chart--spark"></div>
 		  			</zg-column>
 		        </zg-colgroup>
@@ -189,10 +189,10 @@
 		socket.on('data_propagation' , function(input){
 			let zgRef = document.querySelector('zing-grid');
 			const data = input.data
-			console.log(data)
+			console.log(input)
 
 			for (i in data) {
-				data[i].CloseTrends =
+				data[i].plot =
 				[
 			      {
 			        "Date": "3/4/2017",
