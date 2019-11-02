@@ -117,7 +117,7 @@
 			  	theme="ios"
 				height="500"
 				pager
-				page-size="20"
+				page-size="10"
 				page-size-options="10,20,50"
 			    layout="row"
 			    layout-controls="disabled"
@@ -129,7 +129,7 @@
 					<zg-column index="high" header="Buy from" width="15%"></zg-column>
 					<zg-column index="low" header="Sell to" width="15%"></zg-column>
 					<zg-column index="pair" header="Pair" width="15%"></zg-column>
-					<zg-column index="difference" header="Difference" width="15%"></zg-column>
+					<zg-column index="difference" header="Difference" width="15%" sort-desc></zg-column>
 
 		          <zg-column index="plot" header="Last 7 days" sort=false renderer="_renderLineChart">
 		            <div class="line-chart--spark"></div>
@@ -165,7 +165,7 @@
 	  let id = `line-chart-${Math.floor(Math.random() * 99999)}`;
 	  zcRef.setAttribute('id', id);
 	  let mapValues = ctv.map(function(trend) {
-	    return trend.Close;
+	    return trend.Difference;
 	  });
 	  // render line chart
 	  zingchart.render({
@@ -186,36 +186,36 @@
 		const ADDRESS = "<%= address %>";
 		var socket = io.connect(ADDRESS);
 
-		socket.on('data_propagation' , function(input){
+		socket.on('table_data' , function(input){
 			let zgRef = document.querySelector('zing-grid');
 			const data = input.data
 			console.log(input)
 
-			for (i in data) {
-				data[i].plot =
-				[
-			      {
-			        "Date": "3/4/2017",
-			        "Close": 138.96
-			      },
-			      {
-			        "Date": "10/2/2016",
-			        "Close": 113
-			      },
-			      {
-			        "Date": "5/2/2016",
-			        "Close": 93.42
-			      },
-			      {
-			        "Date": "12/5/2015",
-			        "Close": 113.18
-			      },
-			      {
-			        "Date": "7/1/2015",
-			        "Close": 132.07
-			      }
-			    ]
-			}
+			// for (i in data) {
+			// 	data[i].plot =
+			// 	[
+			//       {
+			//         "Date": "3/4/2017",
+			//         "Close": 138.96
+			//       },
+			//       {
+			//         "Date": "10/2/2016",
+			//         "Close": 113
+			//       },
+			//       {
+			//         "Date": "5/2/2016",
+			//         "Close": 93.42
+			//       },
+			//       {
+			//         "Date": "12/5/2015",
+			//         "Close": 113.18
+			//       },
+			//       {
+			//         "Date": "7/1/2015",
+			//         "Close": 132.07
+			//       }
+			//     ]
+			// }
 
 			zgRef.setData(data);
 
