@@ -393,7 +393,6 @@ function fetch_prices() {
                         time=time_now));
                 }
             }
-            console.log(common_pairs)
             common_pairs = [].concat(...common_pairs);
             // ***** NOTE: Deprecated ******
             // common_pairs.sort(compare_descending);
