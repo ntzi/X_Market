@@ -393,6 +393,7 @@ function fetch_prices() {
                         time=time_now));
                 }
             }
+            console.log(common_pairs)
             common_pairs = [].concat(...common_pairs);
             // ***** NOTE: Deprecated ******
             // common_pairs.sort(compare_descending);
@@ -406,7 +407,7 @@ function fetch_prices() {
         // Repeat the call.
         fetch_prices();
         // Set wait time to at least 20 secs. Coinbase needs 20 secs to fetch all data.
-    }, 20000);
+    }, 60000);
 };
 
 const main = async () => {
