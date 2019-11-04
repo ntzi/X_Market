@@ -10,7 +10,6 @@ var methods = {}
 const save_data = (input) => {
     // Save new data to database.
 
-    console.log('Saving data...')
     promise = new Promise((resolve, reject) => {
         const execute = async () => {
             // Get the structure of the schema from coin.js
@@ -39,7 +38,7 @@ const save_data = (input) => {
                 }
             }
 
-            const add_new_pairs = async () => {
+            const add_new = async () => {
                 // Add new pairs in database.
 
                 new_pairs = []
@@ -70,18 +69,59 @@ const save_data = (input) => {
                     }
                 }
             }
+
+            const delete_unused = async () => {
+                // Delete unused pairs in database.
+
+                const pairs = await Coin.find((err) => {
+                    if (err) throw err
+                })
+
+                const find = () => {
+                    let found = false
+                    let counter_deleted = 0
+                    // Scan all pairs existed in database.
+                    for (pair of pairs) {
+                        // Scan all new pairs that are about to be saved in the database.
+                        for (new_pair of input){
+                            if  ((pair.pair == new_pair.pair) &&
+                                (pair.platform_name_1 == new_pair.platform_name_1) &&
+                                (pair.platform_name_2 == new_pair.platform_name_2)) {
+                                    found = true
+                            }
+                        }
+                        // If a pair in the database is not going to get updated from the new values, it gets deleted.
+                        if (! found){
+                            let filter = {_id: pair.id};
+                            Coin.findByIdAndRemove(filter, (err) => {
+                                if (err) throw err
+                            })
+                            counter_deleted += 1
+                        }
+                    }
+                    return counter_deleted
+                }
+                let counter_deleted = await find()
+                if (counter_deleted > 0){
+                    console.log('Unused pairs deleted: %d', counter_deleted)
+                }
+            }
+            // Delete unused pairs in database.
+            await delete_unused()
             // Update the values of existing pair in database.
             await update()
             // Add new pairs in database.
             // First update and the add new pair, otherwise, each new pair would save the first value 2 times in database.
-            await add_new_pairs()
+            await add_new()
+
+            // ***** Delete *****
+            // console.log('Deleting databse...')
+            // Coin.remove().exec();
         }
         execute()
     })
-    return promise
 
-    // ***** Delete *****
-    // Coin.remove().exec();
+    return promise
 }
 
 
