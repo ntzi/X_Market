@@ -60,8 +60,6 @@
 			outline: none;
 		}
 
-
-
 		.component--container {
 		  display: flex;
 		}
@@ -76,34 +74,15 @@
 		.zc-license {
 		  display:none;
 		}
-
-
-
-
 	</style>
 </head>
 <body>
 	<div class="container">
 		<div class="col-md-12">
-			<!-- <canvas id="myChart" width="400" height="200"></canvas> -->
-		</div>
-	</div>
-	<div class="container">
-		<div class="col-md-12">
 			<div>
-				<!-- Open this for old table -->
-				<!-- <table class="table table-hover" style="border-collapse:collapse;" id="my_table"> -->
+				<table>
 					<thead></thead>
 					<tbody></tbody>
-					<!-- <thead>
-					<tr>
-						<td><h1 class="font">Platform</h1></td>
-						<td><h1 class="font">Pair</h1></td>
-						<td><h1 class="font">Difference</h1></td>
-						<!-- <td><h1 class="font">Difference Graph (7d)</h1></td> -->
-						<!-- <td><canvas id="myChart" width="400" height="200"></canvas></td> -->
-					<!-- </tr>
-				</thead> -->
 				</table>
 			</div>
 		</div>
@@ -143,9 +122,6 @@
 
 
 	<script>
-
-
-
 	const ZingChartConfig = function(type, series) {
 	  return {
 	    type,
@@ -181,53 +157,15 @@
 	  });
 	}
 
-
 	window.addEventListener('load', () => {
 		const ADDRESS = "<%= address %>";
 		var socket = io.connect(ADDRESS);
-
 		socket.on('table_data' , function(input){
 			let zgRef = document.querySelector('zing-grid');
 			const data = input.data
-			console.log(input)
-
-			// for (i in data) {
-			// 	data[i].plot =
-			// 	[
-			//       {
-			//         "Date": "3/4/2017",
-			//         "Close": 138.96
-			//       },
-			//       {
-			//         "Date": "10/2/2016",
-			//         "Close": 113
-			//       },
-			//       {
-			//         "Date": "5/2/2016",
-			//         "Close": 93.42
-			//       },
-			//       {
-			//         "Date": "12/5/2015",
-			//         "Close": 113.18
-			//       },
-			//       {
-			//         "Date": "7/1/2015",
-			//         "Close": 132.07
-			//       }
-			//     ]
-			// }
-
 			zgRef.setData(data);
-
 		})
 	});
-
-
-
-
-
-
-
 	</script>
 
 </body>

@@ -46,65 +46,12 @@ app.use(express.static(__dirname + '/public'))
 
 
 //-----------------------------------------
-// Mongoose Schema Initialization
-//-----------------------------------------
-var data_schema = new mongoose.Schema({
-    _time: Number,
-    _data:[{
-        pair: String,
-        high: String,
-        low: String,
-        difference: Number
-    }]
-});
-var Data = mongoose.model('Data', data_schema);
-
-
-// Remodel the database shape.
-var data_schema_new = new mongoose.Schema({
-    pair: String,
-    platform_1: String,
-    platform_2: String,
-    data:[{
-        time: Number,
-        difference: Number
-    }]
-});
-
-var Data_new = mongoose.model('Data', data_schema);
-
-//-----------------------------------------
 // Tools
 //-----------------------------------------
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
-
-function compare_descending( a, b ) {
-  if ( a.difference > b.difference ){
-    return -1;
-  }
-  if ( a.difference < b.difference ){
-    return 1;
-  }
-  return 0;
-}
-
-function compare_ascending( a, b ) {
-  if ( a.difference < b.difference ){
-    return -1;
-  }
-  if ( a.difference > b.difference ){
-    return 1;
-  }
-  return 0;
-}
-
-
-
-var lakebtc_prices = {};
-
 
 
 const send_data = async(io) => {
@@ -121,14 +68,6 @@ const save_data = async (input) => {
     await Promise.resolve(promise)
 
 }
-
-
-
-
-
-
-
-
 
 
 
@@ -161,7 +100,6 @@ const binance_api = require('node-binance-api')().options({
     useServerTime: true // If you get timestamp errors, synchronize to server time at startup
 });
 
-// Get pair prices from binance.com
 function binance(){
     // Get the price of all pairs from binance.
     var binance_prices = {};
@@ -176,10 +114,8 @@ function binance(){
     promise.catch(function(error) {
         console.log(error);
     });
-
     return promise
 };
-
 
 function lakebtc() {
     // Get the price of all pairs from lakebtc.
@@ -225,10 +161,7 @@ function get_coinbase_pairs() {
 
 function coinbase_single_pair(pair) {
     // Get the price of all pairs from coinbase.
-    // pairs = ['BTC-USD', 'ETH-USD'];
-    // pair = 'BTC-USD';
     var pairs_obj = {}
-
     promise = new Promise((resolve, reject) => {
         publicClient
           .getProductTicker(pair)
@@ -242,7 +175,6 @@ function coinbase_single_pair(pair) {
 
 function coinbase(){
     promise = new Promise((resolve, reject) => {
-
         const start = async () => {
             // Split the pairs of Binance in packs of 6 items because more than 6 items can't be called in a (burst) API
             // call.
@@ -334,14 +266,9 @@ function coinbase(){
     return promise
 }
 
-const init = async() => {
-    const promise_coinbase_pairs = get_coinbase_pairs();
-    const [coinbase_pairs] = await Promise.all([promise_coinbase_pairs]);
-    return coinbase_pairs
-}
-
 
 function fetch_prices() {
+    // Fetch new prices recurrently.
     setTimeout(() => {
         async_fetch();
         async function async_fetch() {
@@ -395,8 +322,6 @@ function fetch_prices() {
                 }
             }
             common_pairs = [].concat(...common_pairs);
-            // ***** NOTE: Deprecated ******
-            // common_pairs.sort(compare_descending);
             console.log("All APIs called.")
 
             // Save new data to database.
@@ -411,7 +336,6 @@ function fetch_prices() {
 };
 
 const main = async () => {
-    // await save_data()
     await fetch_prices()
 }
 
