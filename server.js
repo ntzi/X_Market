@@ -11,6 +11,8 @@ var os = require( 'os' );
 var mongoose = require('mongoose');
 const CoinbasePro = require('coinbase-pro');
 const publicClient = new CoinbasePro.PublicClient();
+require('dotenv').config()
+
 // var tools = require('./tools.js');
 
 // Custom files.
@@ -28,7 +30,7 @@ const PORT = process.env.PORT || 3000
 server.listen(PORT, () => console.log(`Listening on ${ PORT }`))
 // Ports 3000 and 5000 are used (most of the time) on local runs.
 if (PORT == '3000'|| PORT == '5000') {
-    address = 'http://localhost:'+PORT
+    address = 'http://localhost:' + PORT
 } else {
     address = 'https://x-market-mvp.herokuapp.com/';
 }
@@ -155,8 +157,7 @@ io.on('connection', function (socket) {
 
 
 const binance_api = require('node-binance-api')().options({
-    APIKEY: '5voMApdn1jp8AeVRdYazi7SXD32MpZjvwwrE3CGamIch96041K4QOOv0Ln4r1fTI',
-    // APISECRET: 'cCPQ6aYNCbUA3fmgYolN4FAFEnIJ5eJ4nU6zSOF33WYvAnkFBaZuZlOmNX1FTFPY',
+    APIKEY: process.env.BINANCE_APIKEY,
     useServerTime: true // If you get timestamp errors, synchronize to server time at startup
 });
 
