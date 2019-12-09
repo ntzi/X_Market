@@ -6,8 +6,7 @@ var io = require('socket.io')(server);
 
 var methods = {}
 
-// methods.save_data = async (input) => {
-const save_data = (input) => {
+const save_data = (input, local_db='mongodb://localhost/x-market-mvp') => {
     // Save new data to database.
 
     promise = new Promise((resolve, reject) => {
@@ -18,7 +17,7 @@ const save_data = (input) => {
             var db = mongoose.connection;
             mongoose.set('useNewUrlParser', true);
             mongoose.set('useUnifiedTopology', true);
-            await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/x-market-mvp',  (err) => {
+            await mongoose.connect(process.env.MONGODB_URI || local_db,  (err) => {
                 if (err) throw err;
             })
 
@@ -26,7 +25,7 @@ const save_data = (input) => {
                 // Update the values of existing pairs in database.
 
                 console.log('Updating database...')
-                for (item of input){
+                for (let item of input){
                     var filter = { pair: item.pair, platform_name_1: item.platform_name_1,
                         platform_name_2: item.platform_name_2};
                     var update = {$push: {time: item.time, difference: item.difference}};
@@ -101,6 +100,7 @@ const save_data = (input) => {
                     }
                     return counter_deleted
                 }
+                // TODO: Make sure this await waits for the loop to complete.
                 let counter_deleted = await find()
                 if (counter_deleted > 0){
                     console.log('Unused pairs deleted: %d', counter_deleted)
@@ -117,6 +117,8 @@ const save_data = (input) => {
             // ***** Delete *****
             // console.log('Deleting databse...')
             // Coin.remove().exec();
+
+            resolve()
         }
         execute()
     })
@@ -125,7 +127,7 @@ const save_data = (input) => {
 }
 
 
-const send_data = (io) => {
+const send_data = (io, local_db='mongodb://localhost/x-market-mvp') => {
     // Get all needed data from database and push them to client.
 
     console.log('Sending data...')
@@ -137,7 +139,7 @@ const send_data = (io) => {
             // Connect to db.
             mongoose.set('useNewUrlParser', true);
             mongoose.set('useUnifiedTopology', true);
-            mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/x-market-mvp', (err) => {
+            mongoose.connect(process.env.MONGODB_URI || local_db, (err) => {
                 if (err) throw err;
             })
 
@@ -202,7 +204,7 @@ const send_data = (io) => {
 
                 // Convert time format from msec to DD/MM/YY HH:MM
                 for (i in time){
-                    let date = new Date(pair.time[i]);
+                    let date = new Date(time[i]);
                     let year = date.getFullYear()
                     let month = date.getMonth()
                     let day = date.getDate()
@@ -231,13 +233,14 @@ const send_data = (io) => {
                     difference: latest_difference,
                     plot: plot
                 })
-
             }
             // io.emit doesn't work without io.on('connection')
             io.on('connection', (socket) => {
                 // Nothing needed
             })
             io.emit('table_data', {data: data});
+            // Returning the data with resolve() is required only in testing (db_test.js).
+            resolve(data)
         }
         execute()
     })
