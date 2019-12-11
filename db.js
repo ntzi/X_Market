@@ -150,10 +150,10 @@ const send_data = (io, local_db='mongodb://localhost/x-market-mvp') => {
                 if (err) throw err
             }).limit(period)
 
-            var plot_data = {
-                time: [],
-                difference: []
-            }
+
+            // console.log(query_result)
+
+
 
             // Calculate the time (in msecs) 1 week ago.
             var week_period = Date.now() - 604800000
@@ -162,7 +162,7 @@ const send_data = (io, local_db='mongodb://localhost/x-market-mvp') => {
             for (pair of query_result) {
                 // Get the last record of the differences.
                 var latest_difference = pair.difference[pair.difference.length - 1]
-                // Check wheter the most recent record of difference in this pair of coins is possitive or negative
+                // Check wheter the most recent record of difference in this pair of coins is positive or negative
                 // and determine from which platform should buy and where to sell.
                 if (latest_difference >= 0) {
                     var high = pair.platform_name_1
@@ -191,16 +191,20 @@ const send_data = (io, local_db='mongodb://localhost/x-market-mvp') => {
                 var total_points = pair.time.length
 
                 // Calculate the indices of the selected data to plot.
-                // We don't want to plot all the points of the last week, instead we want to plot only 20, equally
+                // We don't want to plot all the points of the last week, instead we want to plot only 10, equally
                 // distanced, points.
                 var indices = makeArr(startValue=0, stopValue=total_points - 1, cardinality=num_of_points)
-                // Gather the 20 points that are equally distanced from each other in the last week of data points.
+                // Gather the 10 points that are equally distanced from each other in the last week of data points.
                 let difference = []
                 let time = []
-                for (index of indices) {
+                for (let index of indices) {
                     time.push(pair.time[index])
                     difference.push(pair.difference[index])
                 }
+
+                // console.log(indices)
+                // console.log(time)
+
 
                 // Convert time format from msec to DD/MM/YY HH:MM
                 for (i in time){
@@ -214,7 +218,8 @@ const send_data = (io, local_db='mongodb://localhost/x-market-mvp') => {
                     time[i] = date_formated
                 }
                 let plot = []
-                let len = time.length
+                // let len = time.length
+
                 // Loop from the end to the start in order to display the plot left to right (last value on the
                 // right end).
                 for (i in time){
@@ -233,6 +238,11 @@ const send_data = (io, local_db='mongodb://localhost/x-market-mvp') => {
                     difference: latest_difference,
                     plot: plot
                 })
+
+
+                // break
+
+
             }
             // io.emit doesn't work without io.on('connection')
             io.on('connection', (socket) => {

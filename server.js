@@ -1,5 +1,3 @@
-
-// var mongo = require('mongodb');
 var Promise = require('promise');
 const https = require('https');
 var express = require('express');
@@ -12,13 +10,17 @@ var mongoose = require('mongoose');
 const CoinbasePro = require('coinbase-pro');
 const publicClient = new CoinbasePro.PublicClient();
 require('dotenv').config()
+const binance_api = require('node-binance-api')().options({
+    APIKEY: process.env.BINANCE_APIKEY,
+    useServerTime: true // If you get timestamp errors, synchronize to server time at startup
+});
 
-// var tools = require('./tools.js');
+
 
 // Custom files.
 var database = require('./db')
 
-
+// NOTE: Deprecated?
 app.set('view engine', 'ejs')
 
 // 'process.env.PORT' will set the port using Heroku, else use the port 3000.
@@ -93,12 +95,6 @@ io.on('connection', function (socket) {
     });
 });
 
-
-
-const binance_api = require('node-binance-api')().options({
-    APIKEY: process.env.BINANCE_APIKEY,
-    useServerTime: true // If you get timestamp errors, synchronize to server time at startup
-});
 
 function binance(){
     // Get the price of all pairs from binance.
@@ -322,6 +318,7 @@ function fetch_prices() {
                 }
             }
             common_pairs = [].concat(...common_pairs);
+            console.log(common_pairs)
             console.log("All APIs called.")
 
             // Save new data to database.
@@ -332,7 +329,7 @@ function fetch_prices() {
         // Repeat the call.
         fetch_prices();
         // Set wait time to at least 20 secs. Coinbase needs 20 secs to fetch all data.
-    }, 60000);
+    }, 20000);
 };
 
 const main = async () => {
