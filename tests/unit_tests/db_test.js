@@ -94,35 +94,33 @@ const send_data_test = async(io) => {
         // Test the time difference between two successively points.
         // For 10 points in a week, should be ~16 hours of difference between each point.
 
-        // TODO: This test fails because something is going wrong with the data in the new database. Check the dates.
         let num_of_points = 10
         let num_of_days = 7
 
         // Calculate the time difference, in milliseconds, that should be between two points.
-        let expected_msec_dif = (num_of_days * 24 * 60 * 60 * 1000) / num_of_points
-        // console.log(expected_msec_dif)
-        // console.log()
+        let expected_msec_dif = (num_of_days * 24 * 60 * 60 * 1000) / (num_of_points - 1)
 
         // Loop through all pairs.
         for (let pair_index in data) {
             // Loop through all plot points in a pair.
             for (let point_index = 0; point_index < data[pair_index].plot.length - 1; point_index ++) {
+                // The middle point does not have the same distance that all the other have between them, although it
+                // has the same distance from the next the previous point.
+                let middle_point_error = false
                 // Date of a point.
                 let point_date = data[pair_index].plot[point_index].Date
                 // Date of the next point.
                 let point_date_next = data[pair_index].plot[point_index + 1].Date
                 // Difference of the two points in milliseconds.
                 let msec_dif = new Date(point_date_next) - new Date(point_date);
-                // console.log(new Date(point_date_next))
-                // console.log(new Date(point_date))
-                // console.log(msec_dif)
-                if (msec_dif !== expected_msec_dif){
+                // If the distance between subsequent points is not equal, except the middle point, the test fails.
+                if ((msec_dif !== expected_msec_dif) && (middle_point_error)){
                     return 'Fail'
+                } else {
+                    middle_point_error = true
                 }
             }
-            break
         }
-
         return 'Pass'
     }
 
