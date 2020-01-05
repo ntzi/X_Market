@@ -1,10 +1,4 @@
 var mongoose = require('mongoose');
-var express = require('express');
-var app = express();
-var server = require('http').Server(app);
-var io = require('socket.io')(server);
-
-var methods = {}
 
 const save_data = (input, local_db='mongodb://localhost/x-market-mvp') => {
     // Save new data to database.
@@ -24,12 +18,13 @@ const save_data = (input, local_db='mongodb://localhost/x-market-mvp') => {
             const update = () => {
                 // Update the values of existing pairs in database.
 
-                console.log('Updating database...')
+                // console.log('Updating database...')
                 for (let item of input){
                     var filter = { pair: item.pair, platform_name_1: item.platform_name_1,
                         platform_name_2: item.platform_name_2};
                     var update = {$push: {time: item.time, difference: item.difference}};
 
+                    mongoose.set('useFindAndModify', false);
                     // Find the record of this pair in the database and add new values of time and difference.
                     Coin.findOneAndUpdate(filter, update, function(err, coin) {
                         if (err) throw err;
@@ -63,7 +58,7 @@ const save_data = (input, local_db='mongodb://localhost/x-market-mvp') => {
                         // Save Schema.
                         newCoin.save(function(err) {
                             if (err) throw err;
-                            console.log('Saving new pair...');
+                            // console.log('Saving new pair...');
                         })
                     }
                 }
@@ -83,9 +78,9 @@ const save_data = (input, local_db='mongodb://localhost/x-market-mvp') => {
                     for (pair of pairs) {
                         // Scan all new pairs that are about to be saved in the database.
                         for (new_pair of input){
-                            if  ((pair.pair == new_pair.pair) &&
-                                (pair.platform_name_1 == new_pair.platform_name_1) &&
-                                (pair.platform_name_2 == new_pair.platform_name_2)) {
+                            if  ((pair.pair === new_pair.pair) &&
+                                (pair.platform_name_1 === new_pair.platform_name_1) &&
+                                (pair.platform_name_2 === new_pair.platform_name_2)) {
                                     found = true
                             }
                         }
@@ -130,7 +125,7 @@ const save_data = (input, local_db='mongodb://localhost/x-market-mvp') => {
 const send_data = (io, local_db='mongodb://localhost/x-market-mvp') => {
     // Get all needed data from database and push them to client.
 
-    console.log('Sending data...')
+    // console.log('Sending data...')
     promise = new Promise((resolve, reject) => {
         const execute = async () => {
             // Get the structure of the schema from coin.js
@@ -149,11 +144,6 @@ const send_data = (io, local_db='mongodb://localhost/x-market-mvp') => {
             var query_result = await Coin.find((err) => {
                 if (err) throw err
             }).limit(period)
-
-
-            // console.log(query_result)
-
-
 
             // Calculate the time (in msecs) 1 week ago.
             var week_period = Date.now() - 604800000
@@ -226,11 +216,6 @@ const send_data = (io, local_db='mongodb://localhost/x-market-mvp') => {
                     difference: latest_difference,
                     plot: plot
                 })
-
-
-                // break
-
-
             }
             // io.emit doesn't work without io.on('connection')
             io.on('connection', (socket) => {
