@@ -202,23 +202,11 @@ const send_data = (io, local_db='mongodb://localhost/x-market-mvp') => {
                     difference.push(pair.difference[index])
                 }
 
-                // console.log(indices)
-                // console.log(time)
-
-
-                // Convert time format from msec to DD/MM/YY HH:MM
+                // Convert time format from msec to UTC format.
                 for (i in time){
-                    let date = new Date(time[i]);
-                    let year = date.getFullYear()
-                    let month = date.getMonth()
-                    let day = date.getDate()
-                    let hours = date.getHours()
-                    let minutes = date.getMinutes()
-                    let date_formated = day + '/' + month + '/' + year + ' ' + hours + ':' + minutes
-                    time[i] = date_formated
+                    time[i] = new Date(time[i]).toUTCString()
                 }
                 let plot = []
-                // let len = time.length
 
                 // Loop from the end to the start in order to display the plot left to right (last value on the
                 // right end).
