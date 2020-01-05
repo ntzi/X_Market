@@ -108,11 +108,6 @@ const save_data = (input, local_db='mongodb://localhost/x-market-mvp') => {
             // Add new pairs in database.
             // First update and the add new pair, otherwise, each new pair would save the first value 2 times in database.
             await add_new()
-
-            // ***** Delete *****
-            // console.log('Deleting databse...')
-            // Coin.remove().exec();
-
             resolve()
         }
         execute()

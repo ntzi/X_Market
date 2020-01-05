@@ -320,7 +320,6 @@ function fetch_prices() {
                 }
             }
             common_pairs = [].concat(...common_pairs);
-            console.log(common_pairs)
             console.log("All APIs called.")
 
             // Save new data to database.
@@ -331,7 +330,7 @@ function fetch_prices() {
         // Repeat the call.
         fetch_prices();
         // Set wait time to at least 20 secs. Coinbase needs 20 secs to fetch all data.
-    }, 20000);
+    }, 60000);
 };
 
 const main = async () => {
