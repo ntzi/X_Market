@@ -59,6 +59,7 @@ function sleep(ms) {
 const send_data = async(io) => {
     // Get all needed data from database and push them to client.
 
+    console.log('Sending data...')
     let promise = database.send_data(io)
     await Promise.resolve(promise)
 }
@@ -66,6 +67,7 @@ const send_data = async(io) => {
 const save_data = async (input) => {
     // Save new data to database.
 
+    console.log('Updating database...')
     let promise = database.save_data(input)
     await Promise.resolve(promise)
 
