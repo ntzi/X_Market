@@ -1,13 +1,6 @@
 var mongoose = require('mongoose');
-var express = require('express');
-var app = express();
-var server = require('http').Server(app);
-var io = require('socket.io')(server);
 
-var methods = {}
-
-// methods.save_data = async (input) => {
-const save_data = (input) => {
+const save_data = (input, local_db='mongodb://localhost/x-market-mvp') => {
     // Save new data to database.
 
     promise = new Promise((resolve, reject) => {
@@ -18,19 +11,20 @@ const save_data = (input) => {
             var db = mongoose.connection;
             mongoose.set('useNewUrlParser', true);
             mongoose.set('useUnifiedTopology', true);
-            await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/x-market-mvp',  (err) => {
+            await mongoose.connect(process.env.MONGODB_URI || local_db,  (err) => {
                 if (err) throw err;
             })
 
             const update = () => {
                 // Update the values of existing pairs in database.
 
-                console.log('Updating database...')
-                for (item of input){
+                // console.log('Updating database...')
+                for (let item of input){
                     var filter = { pair: item.pair, platform_name_1: item.platform_name_1,
                         platform_name_2: item.platform_name_2};
                     var update = {$push: {time: item.time, difference: item.difference}};
 
+                    mongoose.set('useFindAndModify', false);
                     // Find the record of this pair in the database and add new values of time and difference.
                     Coin.findOneAndUpdate(filter, update, function(err, coin) {
                         if (err) throw err;
@@ -64,7 +58,7 @@ const save_data = (input) => {
                         // Save Schema.
                         newCoin.save(function(err) {
                             if (err) throw err;
-                            console.log('Saving new pair...');
+                            // console.log('Saving new pair...');
                         })
                     }
                 }
@@ -84,9 +78,9 @@ const save_data = (input) => {
                     for (pair of pairs) {
                         // Scan all new pairs that are about to be saved in the database.
                         for (new_pair of input){
-                            if  ((pair.pair == new_pair.pair) &&
-                                (pair.platform_name_1 == new_pair.platform_name_1) &&
-                                (pair.platform_name_2 == new_pair.platform_name_2)) {
+                            if  ((pair.pair === new_pair.pair) &&
+                                (pair.platform_name_1 === new_pair.platform_name_1) &&
+                                (pair.platform_name_2 === new_pair.platform_name_2)) {
                                     found = true
                             }
                         }
@@ -101,6 +95,7 @@ const save_data = (input) => {
                     }
                     return counter_deleted
                 }
+                // TODO: Make sure this await waits for the loop to complete.
                 let counter_deleted = await find()
                 if (counter_deleted > 0){
                     console.log('Unused pairs deleted: %d', counter_deleted)
@@ -113,10 +108,7 @@ const save_data = (input) => {
             // Add new pairs in database.
             // First update and the add new pair, otherwise, each new pair would save the first value 2 times in database.
             await add_new()
-
-            // ***** Delete *****
-            // console.log('Deleting databse...')
-            // Coin.remove().exec();
+            resolve()
         }
         execute()
     })
@@ -125,10 +117,10 @@ const save_data = (input) => {
 }
 
 
-const send_data = (io) => {
+const send_data = (io, local_db='mongodb://localhost/x-market-mvp') => {
     // Get all needed data from database and push them to client.
 
-    console.log('Sending data...')
+    // console.log('Sending data...')
     promise = new Promise((resolve, reject) => {
         const execute = async () => {
             // Get the structure of the schema from coin.js
@@ -137,7 +129,7 @@ const send_data = (io) => {
             // Connect to db.
             mongoose.set('useNewUrlParser', true);
             mongoose.set('useUnifiedTopology', true);
-            mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/x-market-mvp', (err) => {
+            mongoose.connect(process.env.MONGODB_URI || local_db, (err) => {
                 if (err) throw err;
             })
 
@@ -148,11 +140,6 @@ const send_data = (io) => {
                 if (err) throw err
             }).limit(period)
 
-            var plot_data = {
-                time: [],
-                difference: []
-            }
-
             // Calculate the time (in msecs) 1 week ago.
             var week_period = Date.now() - 604800000
             let data = []
@@ -160,7 +147,7 @@ const send_data = (io) => {
             for (pair of query_result) {
                 // Get the last record of the differences.
                 var latest_difference = pair.difference[pair.difference.length - 1]
-                // Check wheter the most recent record of difference in this pair of coins is possitive or negative
+                // Check wheter the most recent record of difference in this pair of coins is positive or negative
                 // and determine from which platform should buy and where to sell.
                 if (latest_difference >= 0) {
                     var high = pair.platform_name_1
@@ -189,30 +176,23 @@ const send_data = (io) => {
                 var total_points = pair.time.length
 
                 // Calculate the indices of the selected data to plot.
-                // We don't want to plot all the points of the last week, instead we want to plot only 20, equally
+                // We don't want to plot all the points of the last week, instead we want to plot only 10, equally
                 // distanced, points.
                 var indices = makeArr(startValue=0, stopValue=total_points - 1, cardinality=num_of_points)
-                // Gather the 20 points that are equally distanced from each other in the last week of data points.
+                // Gather the 10 points that are equally distanced from each other in the last week of data points.
                 let difference = []
                 let time = []
-                for (index of indices) {
+                for (let index of indices) {
                     time.push(pair.time[index])
                     difference.push(pair.difference[index])
                 }
 
-                // Convert time format from msec to DD/MM/YY HH:MM
+                // Convert time format from msec to UTC format.
                 for (i in time){
-                    let date = new Date(pair.time[i]);
-                    let year = date.getFullYear()
-                    let month = date.getMonth()
-                    let day = date.getDate()
-                    let hours = date.getHours()
-                    let minutes = date.getMinutes()
-                    let date_formated = day + '/' + month + '/' + year + ' ' + hours + ':' + minutes
-                    time[i] = date_formated
+                    time[i] = new Date(time[i]).toUTCString()
                 }
                 let plot = []
-                let len = time.length
+
                 // Loop from the end to the start in order to display the plot left to right (last value on the
                 // right end).
                 for (i in time){
@@ -231,13 +211,14 @@ const send_data = (io) => {
                     difference: latest_difference,
                     plot: plot
                 })
-
             }
             // io.emit doesn't work without io.on('connection')
             io.on('connection', (socket) => {
                 // Nothing needed
             })
             io.emit('table_data', {data: data});
+            // Returning the data with resolve() is required only in testing (db_test.js).
+            resolve(data)
         }
         execute()
     })
