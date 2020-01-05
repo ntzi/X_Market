@@ -1,22 +1,19 @@
-var express = require('express');
-var app = express();
-var server = require('http').Server(app);
-var io = require('socket.io')(server);
-var database = require('../../db');
+let database = require('../../db');
 
 const send_data_test = async(io) => {
-    // Get all needed data from database and push them to client.
-
+    // Tests about 'send_data' function in db.js file.
 
     const generate_data = () => {
+        // Generate data for the tests.
+
         let promise = new Promise((resolve, reject) => {
-            var week_period = Date.now() - 604800000;
+            let week_period = Date.now() - 604800000;
             // The number of records stored in a period of one week given that every new record is created every
             // minute.
             let period = 1 * 60 * 24 * 7;
             // Calculated every one minute in milliseconds.
             let time_now = week_period + (0 * 60000);
-            var record = [{
+            let record = [{
                     pair: 'test_pair_1',
                     platform_name_1: 'test_platform_1',
                     platform_name_2: 'test_platform_2',
@@ -55,48 +52,32 @@ const send_data_test = async(io) => {
         return promise
     }
 
-    let promise = generate_data()
-    let record = await Promise.resolve(promise)
-    // let record = await generate_data()
-
-
-    // Create a new database 'test_db' for the test.
-    // const test_db = 'mongodb://localhost/x-market-mvp'
-    const test_db = 'mongodb://localhost/test_db';
-
-    // Save new data to database.
-    // let promise_save_data = database.save_data(record, local_db=test_db);
-    // let result = await Promise.resolve(promise_save_data);
-
-    let promise_send_data = database.send_data(io, local_db=test_db);
-    var data = await Promise.resolve(promise_send_data);
-
-    // Test 1
     const test_1 = (data) => {
+        // Test 1
         // Test whether the points of each plot is 10 or not.
 
+        let result = 'Fail'
         let expected_num_of_points = 10
         for (let index in data) {
             let num_of_points = data[index].plot.length
             // If the points of the plot in a single pair are not 10, the test fails.
             if (num_of_points !== expected_num_of_points) {
-                return 'Fail'
+                result = 'Fail'
+                return result
+            } else {
+                result = 'Pass'
             }
         }
-        return 'Pass'
+        return result
     }
 
-    let test_1_result = await test_1(data)
-    console.log(`Test 1: ${test_1_result}`)
-
-    // Test 2
     const test_2 = (data) => {
+        // Test 2
         // Test the time difference between two successively points.
-        // For 10 points in a week, should be ~16 hours of difference between each point.
 
+        let result = 'Fail'
         let num_of_points = 10
         let num_of_days = 7
-
         // Calculate the time difference, in milliseconds, that should be between two points.
         let expected_msec_dif = (num_of_days * 24 * 60 * 60 * 1000) / (num_of_points - 1)
 
@@ -115,35 +96,65 @@ const send_data_test = async(io) => {
                 let msec_dif = new Date(point_date_next) - new Date(point_date);
                 // If the distance between subsequent points is not equal, except the middle point, the test fails.
                 if ((msec_dif !== expected_msec_dif) && (middle_point_error)){
-                    return 'Fail'
+                    result = 'Fail'
+                    return result
                 } else {
                     middle_point_error = true
                 }
+                result = 'Pass'
             }
         }
-        return 'Pass'
+        return result
     }
 
-    let test_2_result = await test_2(data)
-    console.log(`Test 2: ${test_2_result}`)
-
-
-    const delete_database = () => {
+    const delete_database = async () => {
         // Delete the new database 'test_db'.
 
-        console.log('Deleting database...')
-        var Coin = require('../../coin');
-        Coin.remove().exec();
+        let Coin = require('../../coin');
+        let filter = {};
+        await Coin.deleteMany(filter, (err) => {
+            if (err) throw err
+        })
     }
-    // await delete_database()
+
+    // Generate data for the tests.
+    let promise = generate_data()
+    let record = await Promise.resolve(promise)
+
+    // Create a new database 'test_db' for the tests.
+    const test_db = 'mongodb://localhost/test_db';
+
+    // Save new data to test database.
+    let promise_save_data = database.save_data(record, local_db=test_db);
+    let result = await Promise.resolve(promise_save_data);
+
+    let promise_send_data = database.send_data(io, local_db=test_db);
+    let data = await Promise.resolve(promise_send_data);
+
+    // Run tests.
+    let test_1_result = await test_1(data)
+    let test_2_result = await test_2(data)
+
+    // Delete test database.
+    await delete_database()
+
+    result = 'Pass'
+    if (test_1_result === 'Fail'){
+        console.log(' - db_test.send_data_test.test_1: Fail')
+        result = 'Fail'
+    }
+    if (test_2_result === 'Fail') {
+        console.log(' - db_test.send_data_test.test_2: Fail')
+        result = 'Fail'
+    }
+    return result
 };
 
-// console.log('Start');
-send_data_test(io);
-// console.log(data)
-// io.on('connection', (socket) => {
-//     console.log('data')
-// })
+let db_test = async (io) => {
+    let promise = new Promise((resolve, reject) => {
+        resolve(send_data_test(io));
+    })
+    return promise
+}
 
-// console.log('End');
-//
+module.exports = {db_test}
