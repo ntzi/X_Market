@@ -20,14 +20,15 @@
   "devDependencies": {},
   "scripts": {
     "test": "node tests/unit_tests/run_test",
-    "start": "node server.js"
+    "start": "node server.js",
+    "remove_db": "node remove_bd.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ntzi/X_Market.git"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/ntzi/X_Market/issues"
   },
