@@ -15,7 +15,7 @@
     "mongoose": "^5.7.13",
     "node-binance-api": "^0.9.5",
     "promise": "^8.0.3",
-    "socket.io": "^2.2.0"
+    "socket.io": "^2.4.0"
   },
   "devDependencies": {},
   "scripts": {
